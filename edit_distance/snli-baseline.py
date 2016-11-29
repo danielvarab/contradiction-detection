@@ -41,29 +41,43 @@ df = pd.read_csv(file_path, sep="\t")
 
 filtered = df[["sentence_A", "sentence_B", "entailment_judgment"]]
 
-data = np.loadtxt(trial)
+def transfer(dataframe):
+    distances = []
+    labels = []
+    for i in range(0, len(dataframe)):
+        s1 = dataframe.ix[i, "sentence_A"]
+        s2 = dataframe.ix[i, "sentence_B"]
+        r = edit_distance(s1,s2)
+
+        distances.append(r)
+        labels.append(dataframe.ix[i, "entailment_judgment"])
+
+    data = { "distances":distances, "labels":labels }
+    return pd.DataFrame(data)
+
+mapped_df = transfer(filtered)
+
+X = mapped_df["distances"].values.T
+Y = mapped_df["labels"].values
 
 
-
-
-#d = edit_distance(["hello","world","my","is","John"],["hello","John","my","name","is","world"])
+# d = edit_distance(["hello","world","my","is","John"],["hello","John","my","name","is","world"])
 
 #print d
 
-
-X = [[10],[12],[7],[9],[10],[0],[1],[2],[1],[1],[2],[3],[2],[5],[7]]
-Y = ["Neu","Neu","Neu","Neu","Neu","Ent","Ent","Ent","Ent","Ent","Con","Con","Con","Con","Con",]
-
-print len(Y)
-print len(X)
-
-logreg = linear_model.LogisticRegression()
-
-logreg.fit(X, Y)
-
-Z = logreg.predict([[5],[10],[1],[11],[3],[7]])
-Z_proba = logreg.predict_proba([[5],[10],[1],[11],[3],[7]])
-
-print logreg.classes_
-print Z
-print Z_proba
+#
+# X = [[10],[12],[7],[9],[10],[0],[1],[2],[1],[1],[2],[3],[2],[5],[7]]
+# Y = ["Neu","Neu","Neu","Neu","Neu","Ent","Ent","Ent","Ent","Ent","Con","Con","Con","Con","Con",]
+#
+# print len(Y)
+# print len(X)
+#
+# logreg = linear_model.LogisticRegression()
+# logreg.fit(X, Y)
+#
+# Z = logreg.predict([[5],[10],[1],[11],[3],[7]])
+# Z_proba = logreg.predict_proba([[5],[10],[1],[11],[3],[7]])
+#
+# print logreg.classes_
+# print Z
+# print Z_proba
