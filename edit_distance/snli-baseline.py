@@ -19,8 +19,8 @@ def edit_distance(s1, s2):
     s1 = s1.split(" ")
     s2 = s2.split(" ")
 
-    m=len(s1)+1
-    n=len(s2)+1
+    m = len(s1)+1
+    n = len(s2)+1
 
     tbl = {}
     for i in range(m): tbl[i,0] = i
@@ -53,7 +53,7 @@ def transfer(dataframe):
     for i in range(0, len(dataframe)):
         s1 = dataframe.ix[i, "sentence_A"]
         s2 = dataframe.ix[i, "sentence_B"]
-        r = edit_distance(s1,s2)
+        r = edit_distance(s1, s2)
 
         distances.append(r)
         labels.append(dataframe.ix[i, "entailment_judgment"])
