@@ -58,7 +58,7 @@ df1["distance"] = df1.apply (lambda row: edit_distance_label(row), axis=1)
 X = df1["distance"].values
 X = np.transpose(np.matrix(X))
 
-Y = mapped_df["labels"].values
+Y = df1["entailment_judgment"].values
 
 logreg = linear_model.LogisticRegression()
 logreg.fit(X,Y)
