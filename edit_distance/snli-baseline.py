@@ -37,7 +37,7 @@ def edit_distance(s1, s2):
     # print(tbl)
     return tbl[i,j]
 
-file_path = "/home/danielvarab/school/contradiction-detection/sick_dataset/SICK_train.txt"
+file_path = "SICK_train.txt" # LINK: https://raw.githubusercontent.com/ashudeep/evaluate-semantic-relatedness/master/SICK_train.txt
 df = pd.read_csv(file_path, sep="\t")
 
 equal_distribution = []
