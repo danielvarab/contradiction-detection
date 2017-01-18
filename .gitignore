@@ -6,7 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# FOLDERS
 datasets/*
+.idea/*
+
+# OS X FILES
 .DS_Store
 .DS_Store?
 
