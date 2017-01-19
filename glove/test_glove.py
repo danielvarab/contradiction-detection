@@ -10,19 +10,19 @@ import glove
 
 # Mock corpus (shamelessly stolen from Gensim word2vec tests)
 
-# test_corpus = ("""human interface computer
-#  survey user computer system response time
-#  eps user interface system
-#  system human system eps
-#  user response time
-#  trees
-#  graph trees
-#  graph minors trees
-#  graph minors survey
-#  I like graph and stuff
-#  I like trees and stuff
-#  Sometimes I build a graph
-#  Sometimes I build trees""").split("\n")
+test_corpus = ("""human interface computer
+ survey user computer system response time
+ eps user interface system
+ system human system eps
+ user response time
+ trees
+ graph trees
+ graph minors trees
+ graph minors survey
+ I like graph and stuff
+ I like trees and stuff
+ Sometimes I build a graph
+ Sometimes I build trees""").split("\n")
 
 
 
@@ -54,7 +54,15 @@ W = evaluate.merge_main_context(W)
 
 
 def test_similarity():
-    similar = evaluate.most_similar(W, vocab, id2word, 'graph')
+    similar = evaluate.most_similar(W, vocab, id2word, 'boy')
     logging.debug(similar)
 
     assert_equal('trees', similar[0])
+
+
+def test_subcost():
+    w1 = "man"
+    w2 = "boy"
+    result = evaluate.distance(W, vocab, w1, w2)
+
+    assert_equal(0, result)

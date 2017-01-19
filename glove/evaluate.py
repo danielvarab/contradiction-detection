@@ -3,6 +3,7 @@ from functools import partial
 import cPickle as pickle
 
 import numpy as np
+from scipy.special._ufuncs import expit
 
 
 def make_id2word(vocab):
@@ -28,6 +29,12 @@ def merge_main_context(W, merge_fun=lambda m, c: np.mean([m, c], axis=0),
 
     return W[:vocab_size]
 
+
+def distance(W, vocab, w1, w2):
+    w1_id = vocab[w1][0]
+    w2_id = vocab[w2][0]
+
+    return expit(np.dot(W[w1_id], W[w2_id]))
 
 def most_similar(W, vocab, id2word, word, n=15):
     """
