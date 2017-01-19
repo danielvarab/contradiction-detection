@@ -131,9 +131,15 @@ def build_vocab(corpus, synonyms, antonyms):
 
     return {word: (i, freq) for i, (word, freq) in enumerate(vocab.iteritems())}
 
+def init_nym_dict(vocab, d):
+    for k, v in vocab.items():
+        d[v[0]] = []
+
+    return d
+
 def build_syncab(syns, vocab):
     logger.info("Building synonyms from list of synonyms")
-    synonyms = {}
+    synonyms = init_nym_dict(vocab, dict())
     for l in syns:
         tokens = l.strip().split()
         # vocab = {word : (id, freq)}
@@ -145,7 +151,7 @@ def build_syncab(syns, vocab):
 
 def build_antcab(ants, vocab):
     logger.info("Building antonyms from list of antonyms")
-    antonyms = {}
+    antonyms = init_nym_dict(vocab, dict())
     for l in ants:
         tokens = l.strip().split()
         # vocab = {word : (id, freq)}
@@ -229,6 +235,24 @@ def build_cooccur(vocab, corpus, window_size=10, min_count=None):
 
             yield i, j, data[data_idx]
 
+# sim(w1, w2) = v_w1 dot v_w2 + b_w1
+def sim_cost(w1, w2, bias):
+    return w1.dot(w2) + bias
+
+
+def sym_cost(word, synonyms, bias):
+    cost = 0
+    for s in synonyms:
+        cost += log(expit(sim_cost(word, s, bias)))
+
+    return cost
+
+def ant_cost(word, antonyms, bias):
+    cost = 0
+    for s in antonyms:
+        cost = log(expit(-(sim_cost(word, s, bias))))
+
+    return cost
 
 def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
     """
@@ -278,15 +302,15 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         #   $$ J' = w_i^Tw_j + b_i + b_j - log(X_{ij}) $$
         cost_inner = sim_cost(v_main, v_context, b_main[0])  + b_context[0] - log(cooccurrence)
 
-        sym_cost = sym_cost(v_main, v_synonyms, b_main[0])
-        ant_cost = ant_cost(v_main, v_antonyms, b_main[0])
+        sym_c = sym_cost(v_main, v_synonyms, b_main[0])
+        ant_c = ant_cost(v_main, v_antonyms, b_main[0])
 
         # Compute cost
         #
         #   $$ J = f(X_{ij}) (J')^2 $$
         beta = 100
         a = 3.2
-        nym_cost = beta * (sym_cost + a * ant_cost)
+        nym_cost = beta * (sym_c + a * ant_c)
         cost = weight * (cost_inner ** 2) + nym_cost
 
         # Add weighted cost to the global cost tracker
@@ -324,24 +348,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
     return global_cost
 
 
-# sim(w1, w2) = v_w1 dot v_w2 + b_w1
-def sim_cost(w1, w2, bias):
-    return w1.dot(w2) + bias
 
-
-def sym_cost(word, synonyms, bias):
-    cost = 0
-    for s in synonyms:
-        cost += log(expit(sim_cost(word, s, bias)))
-
-    return cost
-
-def ant_cost(word, antonyms, bias):
-    cost = 0
-    for s in antonyms:
-        cost = log(expit(-(sim_cost(word, s, bias))))
-
-    return cost
 
 def train_glove(vocab, synonyms, antonyms, cooccurrences, iter_callback=None, vector_size=100,
                 iterations=25, **kwargs):
@@ -410,13 +417,10 @@ def train_glove(vocab, synonyms, antonyms, cooccurrences, iter_callback=None, ve
              gradient_squared_biases[i_main : i_main + 1],
              gradient_squared_biases[i_context + vocab_size
                                      : i_context + vocab_size + 1],
-             yield from vect_embed(W, s),
+             [W[s] for s in synonyms[i_main]],
+             [W[a] for a in antonyms[i_main]],
              cooccurrence)
-                for i_main, i_context, cooccurrence in cooccurrences for s in synonyms[i_main] for a in antonyms[i_main]]
-
-    #[W[s] for s in synonyms[i_main]],
-    #[W[a] for a in antonyms[i_main]],
-    #for i_main, i_context, cooccurrence in cooccurrences]
+                for i_main, i_context, cooccurrence in cooccurrences]
 
     for i in range(iterations):
         logger.info("\tBeginning iteration %i..", i)
@@ -429,10 +433,6 @@ def train_glove(vocab, synonyms, antonyms, cooccurrences, iter_callback=None, ve
             iter_callback(W)
 
     return W
-
-def vect_embed(W,xs):
-    for x in xs:
-        yield W[x]
 
 def save_model(W, path):
     with open(path, 'wb') as vector_f:
