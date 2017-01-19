@@ -34,7 +34,7 @@ def distance(W, vocab, w1, w2):
     w1_id = vocab[w1][0]
     w2_id = vocab[w2][0]
 
-    return expit(np.dot(W[w1_id], W[w2_id]))
+    return expit(-np.dot(W[w1_id], W[w2_id]))
 
 def most_similar(W, vocab, id2word, word, n=15):
     """
@@ -54,6 +54,16 @@ def most_similar(W, vocab, id2word, word, n=15):
 
     return [id2word[id] for id in top_ids if id != word_id][:n]
 
+def least_similar(W, vocab, id2word, word, n=15):
+
+    assert len(W) == len(vocab)
+
+    word_id = vocab[word][0]
+
+    dists = np.dot(W, W[word_id])
+    top_ids = np.argsort(dists)[:n + 1]
+
+    return [id2word[id] for id in top_ids if id != word_id][:n]
 
 def parse_args():
     parser = ArgumentParser(

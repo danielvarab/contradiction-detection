@@ -232,14 +232,14 @@ def sim_cost(w1, w2, bias):
 
 
 def sym_cost(word, synonyms, bias):
-    cost = np.nextafter(0.,1.)
+    cost = 0
     for s in synonyms:
         cost += log(expit(sim_cost(word, s, bias)))
 
     return cost
 
 def ant_cost(word, antonyms, bias):
-    cost = np.nextafter(0., 1.)
+    cost = 0
     for s in antonyms:
         cost += log(expit(-(sim_cost(word, s, bias))))
 
@@ -291,7 +291,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         # both overall cost calculation and in gradient calculation
         #
         #   $$ J' = w_i^Tw_j + b_i + b_j - log(X_{ij}) $$
-        cost_inner = sim_cost(v_main, v_context, b_main[0])  + b_context[0] - log(cooccurrence)
+        cost_inner = sim_cost(v_main, v_context, b_main[0]) + b_context[0] - log(cooccurrence)  
 
         sym_c = sym_cost(v_main, v_synonyms, b_main[0])
         ant_c = ant_cost(v_main, v_antonyms, b_main[0])
@@ -302,7 +302,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         beta = 100
         a = 3.2
         nym_cost = beta * (sym_c + a * ant_c)
-        cost = weight * (cost_inner ** 2) + nym_cost
+        cost = cooccurrence * (cost_inner ** 2) + nym_cost
 
         # Add weighted cost to the global cost tracker
         global_cost += 0.5 * cost
@@ -315,12 +315,12 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
 
         weighted_nym_cost = weight * cost_inner + nym_cost
 
-        grad_main = weighted_nym_cost * v_context
-        grad_context = weighted_nym_cost * v_main
+        grad_main = weight * cost_inner  * v_context
+        grad_context = weight * cost_inner  * v_main
 
         # Compute gradients for bias terms
-        grad_bias_main = weighted_nym_cost
-        grad_bias_context = weighted_nym_cost
+        grad_bias_main = weight * cost_inner
+        grad_bias_context = weight * cost_inner
 
         # Now perform adaptive updates
         v_main -= (learning_rate * grad_main / np.sqrt(gradsq_W_main))

@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 import evaluate
 import glove
 
+logger = logging.getLogger("glove")
 
 # Mock corpus (shamelessly stolen from Gensim word2vec tests)
 
@@ -30,10 +31,10 @@ def read_lines(path):
     with open(path) as f:
         return f.read().split("\n")
 
-test_corpus = read_lines("../datasets/glove_data/sentences_a.txt")
+test_corpus = read_lines("../datasets/glove_data/snli_sentenceA_72k_train.txt")
 
-synonyms = read_lines("../datasets/glove_data/synonym_200.txt")
-antonyms = read_lines("../datasets/glove_data/antonym_200.txt")
+synonyms = read_lines("../datasets/glove_data/synonym.txt")
+antonyms = read_lines("../datasets/glove_data/antonym.txt")
 
 
 
@@ -55,14 +56,31 @@ W = evaluate.merge_main_context(W)
 
 def test_similarity():
     similar = evaluate.most_similar(W, vocab, id2word, 'boy')
-    logging.debug(similar)
+    print(similar)
+    logger.info(similar)
 
-    assert_equal('trees', similar[0])
+    #assert_equal('trees', similar[0])
+
+def test_dissimilarity():
+    dissimilar = evaluate.least_similar(W, vocab, id2word, 'boy')
+    print(dissimilar)
+    logger.info(dissimilar)
+
+    #assert_equal('trees', similar[0])
 
 
-def test_subcost():
-    w1 = "man"
-    w2 = "boy"
+def test_subcost(w1,w2):
     result = evaluate.distance(W, vocab, w1, w2)
+    print(result)
+    #assert_equal(0, result)
 
-    assert_equal(0, result)
+test_similarity()
+test_dissimilarity()
+test_subcost('boy','woman')
+test_subcost('boy','walking')
+test_subcost('tall','small')
+test_subcost('small','tall')
+test_subcost('boy','father')
+
+
+
