@@ -287,6 +287,13 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
 
         weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
 
+
+        # attempt to make new cost function according to antonym word embed paper - ABRJ
+        #sym_c = sym_cost(v_main, v_synonyms, b_main[0])
+        # ant_c = ant_cost(v_main, v_antonyms, b_main[0])
+        # nym_cost = beta * (sym_c + a * ant_c)
+        # cost_inner = cooccurrence * log(expit(sim_cost(v_main, v_context, b_main[0])))
+
         # Compute inner component of cost function, which is used in
         # both overall cost calculation and in gradient calculation
         #
