@@ -162,15 +162,6 @@ def build_antcab(ants, vocab):
     return antonyms
 
 
-def get_antonyms(word_id):
-
-    return ""
-
-def get_synonyms(word_id):
-
-    return ""
-
-
 @listify
 def build_cooccur(vocab, corpus, window_size=10, min_count=None):
     """
@@ -241,16 +232,16 @@ def sim_cost(w1, w2, bias):
 
 
 def sym_cost(word, synonyms, bias):
-    cost = 0
+    cost = np.nextafter(0.,1.)
     for s in synonyms:
         cost += log(expit(sim_cost(word, s, bias)))
 
     return cost
 
 def ant_cost(word, antonyms, bias):
-    cost = 0
+    cost = np.nextafter(0., 1.)
     for s in antonyms:
-        cost = log(expit(-(sim_cost(word, s, bias))))
+        cost += log(expit(-(sim_cost(word, s, bias))))
 
     return cost
 
@@ -344,6 +335,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         gradsq_W_context += np.square(grad_context)
         gradsq_b_main += grad_bias_main ** 2
         gradsq_b_context += grad_bias_context ** 2
+
 
     return global_cost
 
