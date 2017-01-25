@@ -36,10 +36,10 @@ def read_lines(path):
     with open(path) as f:
         return f.read().split("\n")
 
-test_corpus = read_lines("../datasets/glove_data/snli_sentenceA_72k_train.txt")
+test_corpus = read_lines("../../datasets/glove_data/snli_sentenceA_72k_train.txt")
 
-synonyms = read_lines("../datasets/glove_data/synonym_200.txt")
-antonyms = read_lines("../datasets/glove_data/antonym_200.txt")
+synonyms = read_lines("../../datasets/glove_data/synonym_200.txt")
+antonyms = read_lines("../../datasets/glove_data/antonym_200.txt")
 
 
 

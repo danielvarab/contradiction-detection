@@ -6,7 +6,7 @@ from collections import Counter
 import itertools
 from functools import partial
 import logging
-from math import log
+from math import log, exp
 import os.path
 import cPickle as pickle
 from random import shuffle
@@ -336,8 +336,10 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
 
             nym_cost = beta * (sym_c + gamma* ant_c)
             cost = cooccurrence * sim_cost(params[0], params[1], params[2]) + nym_cost
+
+            return cost
         
-        params = np.array([v_main,v_context,b_main[0]])
+        params = (v_main,v_context,b_main[0])
 
         grad_fun = grad(cost)
         c = cost(params)
@@ -478,10 +480,13 @@ def save_model(W, path):
     logger.info("Saved vectors to %s", path)
 
 
-def embed(corpus, synonyms, antonyms, vector_path,window_size=10, min_count=5, vector_size=100, iterations=25, learning_rate=0.05, save_often=False, vocab_path=None, cooccur_path=None, ):
+def main(arguments):
+    corpus = arguments.corpus
+    synonyms = arguments.synonyms
+    antonyms = arguments.antonyms
 
     logger.info("Fetching vocab..")
-    vocab = get_or_build(vocab_path, build_vocab, corpus, synonyms, antonyms)
+    vocab = get_or_build(arguments.vocab_path, build_vocab, corpus, synonyms, antonyms)
     logger.info("Vocab has %i elements.\n", len(vocab))
 
     logger.info("Building list of synonyms and antonyms")
@@ -491,31 +496,30 @@ def embed(corpus, synonyms, antonyms, vector_path,window_size=10, min_count=5, v
 
     logger.info("Fetching cooccurrence list..")
     corpus.seek(0)
-    cooccurrences = get_or_build(cooccur_path,
+    cooccurrences = get_or_build(arguments.cooccur_path,
                                  build_cooccur, vocab, corpus,
-                                 window_size=window_size,
-                                 min_count=min_count)
+                                 window_size=arguments.window_size,
+                                 min_count=arguments.min_count)
     logger.info("Cooccurrence list fetch complete (%i pairs).\n",
                 len(cooccurrences))
 
-    if save_often:
-        iter_callback = partial(save_model, path=vector_path)
+    if arguments.save_often:
+        iter_callback = partial(save_model, path=arguments.vector_path)
     else:
         iter_callback = None
 
     logger.info("Beginning GloVe training..")
     W = train_glove(vocab, synonyms, antonyms, cooccurrences,
                     iter_callback=iter_callback,
-                    vector_size=vector_size,
-                    iterations=iterations,
-                    learning_rate=learning_rate)
+                    vector_size=arguments.vector_size,
+                    iterations=arguments.iterations,
+                    learning_rate=arguments.learning_rate)
 
     # TODO shave off bias values, do something with context vectors
-    save_model(W, vector_path)
+    save_model(W, arguments.vector_path)
 
-    return W
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s\t%(message)s")
-    #main(parse_args())
+    main(parse_args())
