@@ -10,11 +10,11 @@ from math import log
 import os.path
 import cPickle as pickle
 from random import shuffle
+from autograd import grad
 
 import msgpack
-import numpy as np
+import autograd.numpy as np
 from scipy import sparse
-from scipy.special import expit
 
 from util import listify
 
@@ -228,22 +228,41 @@ def build_cooccur(vocab, corpus, window_size=10, min_count=None):
 
 # sim(w1, w2) = v_w1 dot v_w2 + b_w1
 def sim_cost(w1, w2, bias):
-    return w1.dot(w2) + bias
+    return np.dot(w1,w2) + bias
+
+# def sim_derivative(w1, w2, bias, neg):
+#     if neg:
+#         s = np.exp(-sim_cost(w1,w2,bias))
+#         return -(s)/(s+1)
+#     else:
+#         s = np.exp(sim_cost(w1,w2,bias))
+#         return -(s)/(s+1)
+
+def expit(x): 
+    return 1/(1+exp(-x))
 
 
 def sym_cost(word, synonyms, bias):
     cost = 0
+    #deriv = 0
+    #b_deriv = 0
     for s in synonyms:
-        cost += log(expit(sim_cost(word, s, bias)))
+        cost = cost + log(expit(sim_cost(word, s, bias)))
+        #deriv += s * (sim_derivative(word,s,bias,False))
+        #b_deriv += (sim_derivative(word,s,bias,False))
 
-    return cost
+    return (cost)#,deriv, b_deriv)
 
 def ant_cost(word, antonyms, bias):
     cost = 0
-    for s in antonyms:
-        cost += log(expit(-(sim_cost(word, s, bias))))
+    #deriv = 0
+    #b_deriv = 0
+    for a in antonyms:
+        cost = cost + log(expit(-(sim_cost(word, a, bias))))
+        #deriv += a * (-sim_derivative(word, a, bias, True))
+        #b_deriv += (-sim_derivative(word, a, bias, True))
 
-    return cost
+    return (cost)#,deriv, b_deriv)
 
 def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
     """
@@ -285,7 +304,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
     for (v_main, v_context, b_main, b_context, gradsq_W_main, gradsq_W_context,
          gradsq_b_main, gradsq_b_context, v_synonyms, v_antonyms, cooccurrence) in data:
 
-        weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
+        #weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
 
 
         # attempt to make new cost function according to antonym word embed paper - ABRJ
@@ -298,50 +317,69 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         # both overall cost calculation and in gradient calculation
         #
         #   $$ J' = w_i^Tw_j + b_i + b_j - log(X_{ij}) $$
-        cost_inner = sim_cost(v_main, v_context, b_main[0]) + b_context[0] - log(cooccurrence)  
+        #cost_inner = sim_cost(v_main, v_context, b_main[0]) + b_context[0] - log(cooccurrence)  
 
-        sym_c = sym_cost(v_main, v_synonyms, b_main[0])
-        ant_c = ant_cost(v_main, v_antonyms, b_main[0])
+        # (sym_c, sym_deriv, s_b_deriv) = sym_cost(v_main, v_synonyms, b_main[0])
+        # (ant_c, ant_deriv, a_b_deriv) = ant_cost(v_main, v_antonyms, b_main[0])
 
         # Compute cost
         #
         #   $$ J = f(X_{ij}) (J')^2 $$
         beta = 100
-        a = 3.2
-        nym_cost = beta * (sym_c + a * ant_c)
-        cost = cooccurrence * (cost_inner ** 2) + nym_cost
+        gamma = 3.2
+        def cost(params):
+            cost = 0
+            weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
+
+            sym_c = sym_cost(params[0], v_synonyms, params[2])
+            ant_c = ant_cost(params[0], v_antonyms, params[2])
+
+            nym_cost = beta * (sym_c + gamma* ant_c)
+            cost = cooccurrence * sim_cost(params[0], params[1], params[2]) + nym_cost
+        
+        params = np.array([v_main,v_context,b_main[0]])
+
+        grad_fun = grad(cost)
+        c = cost(params)
+        cost_main_grad = grad_fun(params)
+        #nym_cost = beta * (sym_c + alf * ant_c)
+        #cost = cooccurrence * sim_cost(v_main, v_context, b_main[0]) + nym_cost
 
         # Add weighted cost to the global cost tracker
-        global_cost += 0.5 * cost
+        global_cost += 0.5 * c
 
         # Compute gradients for word vector terms.
         #
         # NB: `main_word` is only a view into `W` (not a copy), so our
         # modifications here will affect the global weight matrix;
         # likewise for context_word, biases, etc.
-
-        weighted_nym_cost = weight * cost_inner + nym_cost
-
-        grad_main = weight * cost_inner  * v_context
-        grad_context = weight * cost_inner  * v_main
+        #_____Original_____
+        #grad_main = weight * cost_inner  * v_context
+        #grad_context = weight * cost_inner  * v_main
+        #_____Old__________
+        #context_sim_deriv = sim_derivative(v_main,v_context,b_main,False)
+        #grad_main = weight * v_context * context_sim_deriv + beta * (sym_deriv + alf * ant_deriv)
+        #grad_context = weight * v_main * context_sim_deriv
+        grad_main = cost_main_grad[0]
+        grad_context = cost_main_grad[1]
 
         # Compute gradients for bias terms
-        grad_bias_main = weight * cost_inner
-        grad_bias_context = weight * cost_inner
+        grad_bias_main = cost_main_grad[2]
+        #grad_bias_context = 
 
         # Now perform adaptive updates
         v_main -= (learning_rate * grad_main / np.sqrt(gradsq_W_main))
         v_context -= (learning_rate * grad_context / np.sqrt(gradsq_W_context))
 
         b_main -= (learning_rate * grad_bias_main / np.sqrt(gradsq_b_main))
-        b_context -= (learning_rate * grad_bias_context / np.sqrt(
-                gradsq_b_context))
+        #b_context -= (learning_rate * grad_bias_context / np.sqrt(
+        #        gradsq_b_context))
 
         # Update squared gradient sums
         gradsq_W_main += np.square(grad_main)
         gradsq_W_context += np.square(grad_context)
         gradsq_b_main += grad_bias_main ** 2
-        gradsq_b_context += grad_bias_context ** 2
+        #gradsq_b_context += grad_bias_context ** 2
 
 
     return global_cost

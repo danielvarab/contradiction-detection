@@ -9,6 +9,11 @@ import glove
 
 logger = logging.getLogger("glove")
 
+#def load_model(path, vocab):
+	
+
+#def train_small_testmodel():
+
 # Mock corpus (shamelessly stolen from Gensim word2vec tests)
 
 test_corpus = ("""human interface computer
@@ -33,8 +38,8 @@ def read_lines(path):
 
 test_corpus = read_lines("../datasets/glove_data/snli_sentenceA_72k_train.txt")
 
-synonyms = read_lines("../datasets/glove_data/synonym.txt")
-antonyms = read_lines("../datasets/glove_data/antonym.txt")
+synonyms = read_lines("../datasets/glove_data/synonym_200.txt")
+antonyms = read_lines("../datasets/glove_data/antonym_200.txt")
 
 
 
