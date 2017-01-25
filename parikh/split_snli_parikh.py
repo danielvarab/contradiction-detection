@@ -21,7 +21,10 @@ def split_data(arguments):
 
 def write_file(df, arguments, type):
     headers = ["sentence1", "sentence2", "gold_label"]
-    sliced = df[[headers[0], headers[1], headers[2]]].sample(n=arguments.n)
+    if(len(df.index) <= arguments.n):
+        sliced = df[[headers[0], headers[1], headers[2]]]
+    else:
+        sliced = df[[headers[0], headers[1], headers[2]]].sample(n=arguments.n)
     for header in headers:
         res = sliced[header]
         output = arguments.output + type + "-" + header + "-" + str(arguments.n) + "-SNLI.txt"
@@ -41,12 +44,12 @@ def main(arguments):
     parser.add_argument('--trainfile', help="Path to SNLI training set.",
                         default="snli_1.0/snli_1.0_train.txt")
     parser.add_argument('--testfile', help="Path to SNLI validation set.",
-                        default="snli_1.0/snli_1.0_dev.txt")
+                        default="snli_1.0/snli_1.test.txt")
     parser.add_argument('--output', help="Path to outputfolder.",
                         default="output/")
     args = parser.parse_args(arguments)
 
-    directory = arguments.output
+    directory = args.output
     if not os.path.exists(directory):
         os.makedirs(directory)
 
