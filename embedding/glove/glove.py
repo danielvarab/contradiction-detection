@@ -15,6 +15,7 @@ from autograd import grad
 import msgpack
 import autograd.numpy as np
 from scipy import sparse
+import sys
 
 from util import listify
 
@@ -238,29 +239,47 @@ def sim_cost(w1, w2, bias):
 #         s = np.exp(sim_cost(w1,w2,bias))
 #         return -(s)/(s+1)
 
-def expit(x): 
-    return 1/(1+exp(-x))
+def expit(x):
+    try:
+        val = np.exp(-x)
+        val = 1.0 / (1.0 + val)
+        return val
+    except TypeError as e:
+        print >> sys.stderr, "X VALUE: %str" % str(x)
+        print >> sys.stderr, "Exception is: %s" % str(e)
+        raise Exception('X VALUE ERROR')
 
 
 def sym_cost(word, synonyms, bias):
-    cost = 0
+    cost = 0.0
     #deriv = 0
     #b_deriv = 0
     for s in synonyms:
-        cost = cost + log(expit(sim_cost(word, s, bias)))
+        try:
+            val = sim_cost(word, s, bias)
+            cost = cost + np.log(expit(val))
         #deriv += s * (sim_derivative(word,s,bias,False))
         #b_deriv += (sim_derivative(word,s,bias,False))
-
+        except TypeError as e:
+            print >> sys.stderr, "SYM VAL VALUE: %str" % str(val)
+            print >> sys.stderr, "Exception is: %s" % str(e)
+            raise Exception("SYM CALC ERROR")
     return (cost)#,deriv, b_deriv)
 
 def ant_cost(word, antonyms, bias):
-    cost = 0
+    cost = 0.0
     #deriv = 0
     #b_deriv = 0
     for a in antonyms:
-        cost = cost + log(expit(-(sim_cost(word, a, bias))))
-        #deriv += a * (-sim_derivative(word, a, bias, True))
-        #b_deriv += (-sim_derivative(word, a, bias, True))
+        try:
+            val = -(sim_cost(word, a, bias))
+            cost = cost + np.log(expit(val))
+            #deriv += a * (-sim_derivative(word, a, bias, True))
+            #b_deriv += (-sim_derivative(word, a, bias, True))
+        except TypeError as e:
+            print >> sys.stderr, "ANT VAL VALUE: %str" % str(val)
+            print >> sys.stderr, "Exception is: %s" % str(e)
+            raise Exception("ANT CALC ERROR")
 
     return (cost)#,deriv, b_deriv)
 
@@ -328,14 +347,13 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         beta = 100
         gamma = 3.2
         def cost(params):
-            cost = 0
             weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
 
             sym_c = sym_cost(params[0], v_synonyms, params[2])
             ant_c = ant_cost(params[0], v_antonyms, params[2])
 
             nym_cost = beta * (sym_c + gamma* ant_c)
-            cost = cooccurrence * sim_cost(params[0], params[1], params[2]) + nym_cost
+            cost = weight * sim_cost(params[0], params[1], params[2]) + nym_cost
 
             return cost
         
@@ -463,6 +481,7 @@ def train_glove(vocab, synonyms, antonyms, cooccurrences, iter_callback=None, ve
 
     for i in range(iterations):
         logger.info("\tBeginning iteration %i..", i)
+
 
         cost = run_iter(vocab, data, **kwargs)
 
