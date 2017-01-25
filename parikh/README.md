@@ -1,6 +1,6 @@
 # Running Parikhs Generic Sentence Classification implementation
 
-the paper [A Decomposable Attention Model for Natural Language Inference](https://arxiv.org/abs/1606.01933). Parikh et al. EMNLP 2016.
+The implementation of this paper [A Decomposable Attention Model for Natural Language Inference](https://arxiv.org/abs/1606.01933). Parikh et al. EMNLP 2016.
 Credits goes to <a href="http://yoon.io">Yoon Kim</a> for the implementation of 
 
 ## Resources
@@ -8,12 +8,11 @@ Credits goes to <a href="http://yoon.io">Yoon Kim</a> for the implementation of
 ### Code
 https://github.com/harvardnlp/decomp-attn
 
-https://github.com/danielvarab/contradiction-detection
 
 ### Data
 Stanford Natural Language Inference (SNLI) dataset can be downloaded from http://nlp.stanford.edu/projects/snli/
 
-Pre-trained GloVe embeddings can be downloaded from http://nlp.stanford.edu/projects/glove/
+Pre-trained GloVe embeddings can be downloaded from http://nlp.stanford.edu/projects/glove/ - Use 300d vectors since the parihk implementation uses 300d vectors as default
 
 
 ## Environment setup
@@ -23,22 +22,27 @@ git clone https://github.com/torch/distro.git ~/torch --recursive
 cd ~/torch; bash install-deps;
 ./install.sh
 
-# On Linux with bash
-source ~/.bashrc
-# On Linux with zsh
-source ~/.zshrc
-# On OSX or in Linux with none of the above.
 source ~/.profile
-```
 
-In order to install the needed hdf5 library, perform the following steps
-If you install hdf5 using brew install hdf5 and after you installed torch-hdf5, you should configure conf.lua at Users/your_name/torch/install/share/lua/5.1/hdf5.
+luarocks install hdf5
+
+brew tap homebrew/science
+brew install hdf5
+```
+Update config file accordingly:
+you should configure config.lua at Users/your_name/torch/install/share/lua/5.1/hdf5.
 Replace the HDF5_INCLUDE_PATH = "/usr/local/Cellar/hdf5/your_version_number/include".
 Replace your_name and your_version_number based on your settings.
 
+According to this link: https://github.com/karpathy/neuraltalk2/issues/123
+
+
 ## Splitting the data
 ```
-python split_snli_parikh.py --devfile path-to-dev-file --trainfile path-to-train-file --testfile path-to-test-file --output path-to-output-folder
+python split_snli_parikh.py --devfile path-to-dev-file 
+                            --trainfile path-to-train-file 
+                            --testfile path-to-test-file 
+                            --output path-to-output-folder
 ```
 
 This will create a total of 9 .txt files in the output-folder. 3 files per data input file, corresponding to sent1, sent2 and label, which will be used in the next step.
@@ -67,8 +71,6 @@ python get_pretrain_vecs.py --glove path-to-glove --outputfile data/glove.hdf5
 
 
 ## Training
-
-
 
 To train the model, run 
 ```
