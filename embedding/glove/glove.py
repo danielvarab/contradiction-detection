@@ -440,13 +440,10 @@ def save_model(W, path):
     logger.info("Saved vectors to %s", path)
 
 
-def main(arguments):
-    corpus = arguments.corpus
-    synonyms = arguments.synonyms
-    antonyms = arguments.antonyms
+def embed(corpus, synonyms, antonyms, vector_path,window_size=10, min_count=5, vector_size=100, iterations=25, learning_rate=0.05, save_often=False, vocab_path=None, cooccur_path=None, ):
 
     logger.info("Fetching vocab..")
-    vocab = get_or_build(arguments.vocab_path, build_vocab, corpus, synonyms, antonyms)
+    vocab = get_or_build(vocab_path, build_vocab, corpus, synonyms, antonyms)
     logger.info("Vocab has %i elements.\n", len(vocab))
 
     logger.info("Building list of synonyms and antonyms")
@@ -456,30 +453,31 @@ def main(arguments):
 
     logger.info("Fetching cooccurrence list..")
     corpus.seek(0)
-    cooccurrences = get_or_build(arguments.cooccur_path,
+    cooccurrences = get_or_build(cooccur_path,
                                  build_cooccur, vocab, corpus,
-                                 window_size=arguments.window_size,
-                                 min_count=arguments.min_count)
+                                 window_size=window_size,
+                                 min_count=min_count)
     logger.info("Cooccurrence list fetch complete (%i pairs).\n",
                 len(cooccurrences))
 
-    if arguments.save_often:
-        iter_callback = partial(save_model, path=arguments.vector_path)
+    if save_often:
+        iter_callback = partial(save_model, path=vector_path)
     else:
         iter_callback = None
 
     logger.info("Beginning GloVe training..")
     W = train_glove(vocab, synonyms, antonyms, cooccurrences,
                     iter_callback=iter_callback,
-                    vector_size=arguments.vector_size,
-                    iterations=arguments.iterations,
-                    learning_rate=arguments.learning_rate)
+                    vector_size=vector_size,
+                    iterations=iterations,
+                    learning_rate=learning_rate)
 
     # TODO shave off bias values, do something with context vectors
-    save_model(W, arguments.vector_path)
+    save_model(W, vector_path)
 
+    return W
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s\t%(message)s")
-    main(parse_args())
+    #main(parse_args())

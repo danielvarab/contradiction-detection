@@ -1,0 +1,10 @@
+contradiction
+contradiction
+contradiction
+contradiction
+entailment
+entailment
+neutral
+contradiction
+entailment
+neutral
