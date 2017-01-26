@@ -6,7 +6,7 @@ from collections import Counter
 import itertools
 from functools import partial
 import logging
-from math import log, exp
+from math import log
 import os.path
 import cPickle as pickle
 from random import shuffle
@@ -499,7 +499,6 @@ def save_model(W, path):
         pickle.dump(W, vector_f, protocol=2)
 
     logger.info("Saved vectors to %s", path)
-
 
 def main(arguments):
     corpus = arguments.corpus
