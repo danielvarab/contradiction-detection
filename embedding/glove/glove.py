@@ -18,7 +18,7 @@ from scipy import sparse
 import sys
 
 from util import listify
-
+import test
 
 logger = logging.getLogger("glove")
 
@@ -252,36 +252,32 @@ def expit(x):
 
 def sym_cost(word, synonyms, bias):
     cost = 0.0
-    #deriv = 0
-    #b_deriv = 0
+
     for s in synonyms:
         try:
             val = sim_cost(word, s, bias)
             cost = cost + np.log(expit(val))
-        #deriv += s * (sim_derivative(word,s,bias,False))
-        #b_deriv += (sim_derivative(word,s,bias,False))
+
         except TypeError as e:
             print >> sys.stderr, "SYM VAL VALUE: %str" % str(val)
             print >> sys.stderr, "Exception is: %s" % str(e)
             raise Exception("SYM CALC ERROR")
-    return (cost)#,deriv, b_deriv)
+    return cost
 
 def ant_cost(word, antonyms, bias):
     cost = 0.0
-    #deriv = 0
-    #b_deriv = 0
+
     for a in antonyms:
         try:
             val = -(sim_cost(word, a, bias))
             cost = cost + np.log(expit(val))
-            #deriv += a * (-sim_derivative(word, a, bias, True))
-            #b_deriv += (-sim_derivative(word, a, bias, True))
+
         except TypeError as e:
             print >> sys.stderr, "ANT VAL VALUE: %str" % str(val)
             print >> sys.stderr, "Exception is: %s" % str(e)
             raise Exception("ANT CALC ERROR")
 
-    return (cost)#,deriv, b_deriv)
+    return cost
 
 def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
     """
@@ -346,22 +342,28 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         #   $$ J = f(X_{ij}) (J')^2 $$
         beta = 100
         gamma = 3.2
-        def cost(params):
+        def cost(v_main, v_context, bias):
             weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
 
-            sym_c = sym_cost(params[0], v_synonyms, params[2])
-            ant_c = ant_cost(params[0], v_antonyms, params[2])
+            #sym_c = -(sym_cost(params[0], v_synonyms, params[2]))
+            #ant_c = -(ant_cost(params[0], v_antonyms, params[2]))
 
-            nym_cost = beta * (sym_c + gamma* ant_c)
-            cost = weight * sim_cost(params[0], params[1], params[2]) + nym_cost
+            #nym_cost = beta * (sym_c + gamma* ant_c)
+            #cost = weight * -(np.log(expit(sim_cost(params[0], params[1], params[2])))) + nym_cost
+            syn_c = sym_cost(v_main, v_synonyms, bias)
+            ant_c = ant_cost(v_main, v_antonyms, bias)
+
+
+            cost = weight * np.log(expit(sim_cost(v_main, v_context, bias))) + beta * (syn_c + gamma * ant_c)
 
             return cost
         
-        params = (v_main,v_context,b_main[0])
+        #params = (v_main,v_context,b_main[0])
 
         grad_fun = grad(cost)
-        c = cost(params)
-        cost_main_grad = grad_fun(params)
+
+        c = cost(v_main,v_context,b_main[0])
+        cost_main_grad = grad_fun(v_main,v_context,b_main[0])
         #nym_cost = beta * (sym_c + alf * ant_c)
         #cost = cooccurrence * sim_cost(v_main, v_context, b_main[0]) + nym_cost
 
@@ -388,10 +390,10 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         #grad_bias_context = 
 
         # Now perform adaptive updates
-        v_main -= (learning_rate * grad_main / np.sqrt(gradsq_W_main))
-        v_context -= (learning_rate * grad_context / np.sqrt(gradsq_W_context))
+        v_main += (learning_rate * grad_main / np.sqrt(gradsq_W_main))
+        v_context += (learning_rate * grad_context / np.sqrt(gradsq_W_context))
 
-        b_main -= (learning_rate * grad_bias_main / np.sqrt(gradsq_b_main))
+        b_main += (learning_rate * grad_bias_main / np.sqrt(gradsq_b_main))
         #b_context -= (learning_rate * grad_bias_context / np.sqrt(
         #        gradsq_b_context))
 
@@ -537,6 +539,8 @@ def main(arguments):
     # TODO shave off bias values, do something with context vectors
     save_model(W, arguments.vector_path)
 
+    #testing
+    #test.evaluate_test(W, vocab)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
