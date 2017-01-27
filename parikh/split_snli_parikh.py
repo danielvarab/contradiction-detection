@@ -17,8 +17,8 @@ def split_data(arguments):
     write_file(pd.read_csv(file_path, sep="\t"), arguments, "dev")
 
     # validation
-    print(file_path)
     file_path = arguments.testfile
+    print(file_path)
     write_file(pd.read_csv(file_path, sep="\t"), arguments, "val")
 
 

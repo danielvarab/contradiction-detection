@@ -1,12 +1,15 @@
 #!/bin/bash
 
 
+
 # Installation of Lua + Torch + dependencies
 # in a terminal, run the commands WITHOUT sudo
-#git clone https://github.com/torch/distro.git ~/torch --recursive
-#cd ~/torch; bash install-deps;
-#./install.sh
+# git clone https://github.com/torch/distro.git ~/torch --recursive
+# cd ~/torch; bash install-deps;
+# ./install.sh
 # source ~/.bashrc
+# luarocks install hdf5
+
 
 
 # Command line Arguments 
