@@ -8,13 +8,16 @@ import os
 def split_data(arguments):
     # train
     file_path = arguments.trainfile
+    print(file_path)
     write_file(pd.read_csv(file_path, sep="\t"), arguments, "train")
 
     # development
     file_path = arguments.devfile
+    print(file_path)
     write_file(pd.read_csv(file_path, sep="\t"), arguments, "dev")
 
     # validation
+    print(file_path)
     file_path = arguments.testfile
     write_file(pd.read_csv(file_path, sep="\t"), arguments, "val")
 
@@ -39,12 +42,9 @@ def main(arguments):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--n', help="Number of sentences",
                         type=int, default=5000)
-    parser.add_argument('--devfile', help="Path to SNLI development set.",
-                        default="snli_1.0/snli_1.0_dev.txt")
-    parser.add_argument('--trainfile', help="Path to SNLI training set.",
-                        default="snli_1.0/snli_1.0_train.txt")
-    parser.add_argument('--testfile', help="Path to SNLI validation set.",
-                        default="snli_1.0/snli_1.test.txt")
+    parser.add_argument('--devfile', help="Path to SNLI development set.")
+    parser.add_argument('--trainfile', help="Path to SNLI training set.")
+    parser.add_argument('--testfile', help="Path to SNLI validation set.")
     parser.add_argument('--output', help="Path to outputfolder.",
                         default="output/")
     args = parser.parse_args(arguments)
