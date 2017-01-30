@@ -9,7 +9,6 @@ from copy import deepcopy
 from autograd import grad
 import numpy as np
 
-#this is acomment
 isNumber = re.compile(r'\d+.*')
 def norm_word(word):
   if isNumber.search(word.lower()):
