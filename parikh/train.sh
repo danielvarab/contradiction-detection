@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+# Example run
+# ./train.sh path-to-snli-data path-to-glove-vectors | tee log.txt
 
 # Installation of Lua + Torch + dependencies
 # in a terminal, run the commands WITHOUT sudo
@@ -21,6 +23,12 @@ number_of_sentences=30000
 splitted_data=splitted_data/
 currentDirectory=`pwd`
 
+# Use FD 19 to capture the debug stream caused by "set -x":
+#exec 19>my-script.txt
+# Tell bash about it  (there's nothing special about 19, its arbitrary)
+#BASH_XTRACEFD=19
+
+# turn on the debug stream:
 #set -x
 
 # Splitting data
@@ -55,15 +63,15 @@ python preprocess.py \
 --outputfile ${DIRECTORY}"/entail" \
 --glove $path_to_glove_vectors
 
-python get_pretrain_vecs.py \
---glove $path_to_glove_vectors \
---outputfile ${DIRECTORY}"/glove.hdf5" \
---dictionary ${DIRECTORY}"/entail.word.dict" \
+#python get_pretrain_vecs.py \
+#--glove $path_to_glove_vectors \
+#--outputfile ${DIRECTORY}"/glove.hdf5" \
+#--dictionary ${DIRECTORY}"/entail.word.dict" \
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"TRAINING"
-th train.lua \
--data_file ${DIRECTORY}"/entail-train.hdf5" \
--val_data_file ${DIRECTORY}"/entail-val.hdf5" \
--test_data_file ${DIRECTORY}"/entail-test.hdf5" \
--pre_word_vecs ${DIRECTORY}"/glove.hdf5"
+#th train.lua \
+#-data_file ${DIRECTORY}"/entail-train.hdf5" \
+#-val_data_file ${DIRECTORY}"/entail-val.hdf5" \
+#-test_data_file ${DIRECTORY}"/entail-test.hdf5" \
+#-pre_word_vecs ${DIRECTORY}"/glove.hdf5"
