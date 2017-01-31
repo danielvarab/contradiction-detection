@@ -38,7 +38,7 @@ currentDirectory=`pwd`
 date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
 cd $path_to_snli_data
 python "$currentDirectory/split_snli_parikh.py" \
---n $number_of_sentences \
+--n 1 \
 --devfile "snli_1.0_dev.txt" \
 --trainfile "snli_1.0_dev.txt" \
 --testfile "snli_1.0_dev.txt" \
