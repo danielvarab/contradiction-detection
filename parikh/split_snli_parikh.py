@@ -9,17 +9,17 @@ def split_data(arguments):
     # train
     file_path = arguments.trainfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "train")
+    write_file(pd.read_csv(file_path, sep="\t"), 550000, arguments.output, "train")
 
     # development
     file_path = arguments.devfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "dev")
+    write_file(pd.read_csv(file_path, sep="\t"), 10000, arguments.output, "dev")
 
     # validation
     file_path = arguments.testfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "val")
+    write_file(pd.read_csv(file_path, sep="\t"), 10000, arguments.output, "val")
 
 
 def write_file(df, numberOfSentences, output, type):
