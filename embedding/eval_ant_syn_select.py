@@ -8,7 +8,7 @@ def read_word_vecs(filename):
 	wordVectors = {}
  	if filename.endswith('.gz'): fileObject = gzip.open(filename, 'r')
  	else: fileObject = open(filename, 'r')
-  
+
  	for line in fileObject:
  		print(len(wordVectors))
  		line = line.strip().lower()
@@ -18,7 +18,7 @@ def read_word_vecs(filename):
       		wordVectors[word][index] = float(vecVal)
     	#''' normalize weight vector '''
     	#wordVectors[word] /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
-    
+
   	sys.stderr.write("Vectors read from: "+filename+" \n")
 	return wordVectors
 
@@ -47,8 +47,8 @@ def eval_embed_on_task(word_embedding, task) :
 			continue
 		source = word_embedding[t[0]]
 		options = np.array(t[1])
-		euclidian = np.argmax(map(lambda x: distance.euclidian(x,source),options))
-		cosine = np.argmax(map(lambda x: distance.cosine(x,source),options))
+		euclidian = np.argmax(map(lambda x: distance.euclidian(word_embedding[x],source),options))
+		cosine = np.argmax(map(lambda x: distance.cosine(word_embedding[x],source),options))
 		if (t[1][euclidian] == t[2]):
 			euclid_correct += 1
 		if (t[1][cosine] == t[2]):
@@ -67,6 +67,3 @@ for key in embed:
 
 #result = eval_embed_on_task(embed, ant_task)
 #print(result)
-
-
-
