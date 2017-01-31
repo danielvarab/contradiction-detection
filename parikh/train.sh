@@ -63,15 +63,15 @@ python preprocess.py \
 --outputfile ${DIRECTORY}"/entail" \
 --glove $path_to_glove_vectors
 
-#python get_pretrain_vecs.py \
-#--glove $path_to_glove_vectors \
-#--outputfile ${DIRECTORY}"/glove.hdf5" \
-#--dictionary ${DIRECTORY}"/entail.word.dict" \
+python get_pretrain_vecs.py \
+--glove $path_to_glove_vectors \
+--outputfile ${DIRECTORY}"/glove.hdf5" \
+--dictionary ${DIRECTORY}"/entail.word.dict" \
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"TRAINING"
-#th train.lua \
-#-data_file ${DIRECTORY}"/entail-train.hdf5" \
-#-val_data_file ${DIRECTORY}"/entail-val.hdf5" \
-#-test_data_file ${DIRECTORY}"/entail-test.hdf5" \
-#-pre_word_vecs ${DIRECTORY}"/glove.hdf5"
+th train.lua \
+-data_file ${DIRECTORY}"/entail-train.hdf5" \
+-val_data_file ${DIRECTORY}"/entail-val.hdf5" \
+-test_data_file ${DIRECTORY}"/entail-test.hdf5" \
+-pre_word_vecs ${DIRECTORY}"/glove.hdf5"
