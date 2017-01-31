@@ -20,7 +20,9 @@ path_to_glove_vectors=$2
 path_to_output_model=$3
 
 # Variables
-number_of_sentences=30000
+train_number_of_sentences=550000
+dev_number_of_sentences=10000
+val_number_of_sentences=10000
 splitted_data=splitted_data/
 currentDirectory=`pwd`
 
@@ -52,15 +54,15 @@ if [ ! -d "$DIRECTORY" ]; then
 fi
 
 python preprocess.py \
---srcfile ${splitted_data}"train-sentence1-"${number_of_sentences}"-SNLI.txt" \
---targetfile $splitted_data"train-sentence2-"$number_of_sentences"-SNLI.txt" \
---labelfile $splitted_data"train-gold_label-"$number_of_sentences"-SNLI.txt" \
---srcvalfile $splitted_data"val-sentence1-"$number_of_sentences"-SNLI.txt" \
---targetvalfile $splitted_data"val-sentence2-"$number_of_sentences"-SNLI.txt" \
---labelvalfile $splitted_data"val-gold_label-"$number_of_sentences"-SNLI.txt" \
---srctestfile $splitted_data"dev-sentence1-"$number_of_sentences"-SNLI.txt" \
---targettestfile $splitted_data"dev-sentence1-"$number_of_sentences"-SNLI.txt" \
---labeltestfile $splitted_data"dev-gold_label-"$number_of_sentences"-SNLI.txt" \
+--srcfile ${splitted_data}"train-sentence1-"${train_number_of_sentences}"-SNLI.txt" \
+--targetfile $splitted_data"train-sentence2-"$train_number_of_sentences"-SNLI.txt" \
+--labelfile $splitted_data"train-gold_label-"$train_number_of_sentences"-SNLI.txt" \
+--srcvalfile $splitted_data"val-sentence1-"$val_number_of_sentences"-SNLI.txt" \
+--targetvalfile $splitted_data"val-sentence2-"$val_number_of_sentences"-SNLI.txt" \
+--labelvalfile $splitted_data"val-gold_label-"$val_number_of_sentences"-SNLI.txt" \
+--srctestfile $splitted_data"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
+--targettestfile $splitted_data"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
+--labeltestfile $splitted_data"dev-gold_label-"$dev_number_of_sentences"-SNLI.txt" \
 --outputfile ${DIRECTORY}"/entail" \
 --glove $path_to_glove_vectors
 
