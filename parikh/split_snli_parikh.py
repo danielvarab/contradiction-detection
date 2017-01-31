@@ -8,28 +8,31 @@ import os
 def split_data(arguments):
     # train
     file_path = arguments.trainfile
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "train")
+    print(file_path)
+    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "train")
 
     # development
     file_path = arguments.devfile
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "dev")
+    print(file_path)
+    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "dev")
 
     # validation
     file_path = arguments.testfile
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "val")
+    print(file_path)
+    write_file(pd.read_csv(file_path, sep="\t"), arguments.n, arguments.output, "val")
 
 
-def write_file(df, arguments, type):
+def write_file(df, numberOfSentences, output, type):
     headers = ["sentence1", "sentence2", "gold_label"]
-    if(len(df.index) <= arguments.n):
+    if(len(df.index) <= numberOfSentences):
         sliced = df[[headers[0], headers[1], headers[2]]]
     else:
-        sliced = df[[headers[0], headers[1], headers[2]]].sample(n=arguments.n)
+        sliced = df[[headers[0], headers[1], headers[2]]].sample(n=numberOfSentences)
     for header in headers:
         res = sliced[header]
-        output = arguments.output + type + "-" + header + "-" + str(arguments.n) + "-SNLI.txt"
-        res.to_csv(output, index=False)
-        print("Created file with " + str(arguments.n) + " " + header + " pairs")
+        outputName = output + type + "-" + header + "-" + str(numberOfSentences) + "-SNLI.txt"
+        res.to_csv(outputName, index=False)
+        print("Created file with " + str(numberOfSentences) + " " + header + " pairs")
 
 
 
@@ -39,12 +42,9 @@ def main(arguments):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--n', help="Number of sentences",
                         type=int, default=5000)
-    parser.add_argument('--devfile', help="Path to SNLI development set.",
-                        default="snli_1.0/snli_1.0_dev.txt")
-    parser.add_argument('--trainfile', help="Path to SNLI training set.",
-                        default="snli_1.0/snli_1.0_train.txt")
-    parser.add_argument('--testfile', help="Path to SNLI validation set.",
-                        default="snli_1.0/snli_1.test.txt")
+    parser.add_argument('--devfile', help="Path to SNLI development set.")
+    parser.add_argument('--trainfile', help="Path to SNLI training set.")
+    parser.add_argument('--testfile', help="Path to SNLI validation set.")
     parser.add_argument('--output', help="Path to outputfolder.",
                         default="output/")
     args = parser.parse_args(arguments)
