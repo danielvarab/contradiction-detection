@@ -17,6 +17,7 @@
 # Command line Arguments 
 path_to_snli_data=$1
 path_to_glove_vectors=$2
+path_to_output_model=$3
 
 # Variables
 number_of_sentences=30000
@@ -74,4 +75,7 @@ th train.lua \
 -data_file ${DIRECTORY}"/entail-train.hdf5" \
 -val_data_file ${DIRECTORY}"/entail-val.hdf5" \
 -test_data_file ${DIRECTORY}"/entail-test.hdf5" \
--pre_word_vecs ${DIRECTORY}"/glove.hdf5"
+-pre_word_vecs ${DIRECTORY}"/glove.hdf5" \
+-gpuid 1 \
+-savefile $3
+
