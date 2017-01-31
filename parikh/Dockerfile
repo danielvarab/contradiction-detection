@@ -25,6 +25,7 @@ RUN ~/torch/install/bin/luarocks install hdf5
 # Getting code
 RUN cd ~/
 RUN git clone https://github.com/danielvarab/contradiction-detection
+ADD contradiction-detection
 RUN mkdir contradiction-detection/datasets
 RUN cd contradiction-detection/parikh
 RUN pip install -r contradiction-detection/parikh/requirements.txt
