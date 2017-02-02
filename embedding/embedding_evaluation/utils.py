@@ -26,7 +26,6 @@ from compat import _basestring, cPickle, _urllib, md5_hash
 
 TEMP = tempfile.gettempdir()
 
-
 def _get_cluster_assignments(dataset_name, url, sep=" ", skip_header=False):
     data_dir = _get_dataset_dir("categorization", verbose=0)
     _fetch_file(url=url,
