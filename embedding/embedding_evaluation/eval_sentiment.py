@@ -29,14 +29,14 @@ def load_sentiment_data(path):
 			tree = Tree.fromstring(l)
 		  	flat = tree.flatten()
 		  	#Transform from 5 to 2 label problem
-		  	
+
 		  	if (int(flat.label())<2): #adjust negatives
 		  		sentiments.append(0)
 				sentences.append(flat.leaves())
 		  	elif (int(flat.label())>2): #adjust positives
 		  		sentiments.append(1)
 				sentences.append(flat.leaves())
-			
+
 	return sentiments, sentences
 
 def average_sentences_vector(sentences, embed):
@@ -64,10 +64,14 @@ def train_sentiment_classifyer(vectors, sentiment, cs):
 	logreg.fit(vectors,sentiment)
 	return logreg
 
-def test_embedding_on_task(embed):
+def test_embedding_on_task(embed, train_file, test_file):
 	#Load train and test data
-	train_sentiments, train_sentences = load_sentiment_data("../../datasets/trees/train.txt")
-	test_sentiments, test_sentences = load_sentiment_data("../../datasets/trees/test.txt")
+	# train_sentiments, train_sentences = load_sentiment_data("../../datasets/trees/train.txt")
+	# test_sentiments, test_sentences = load_sentiment_data("../../datasets/trees/test.txt")
+
+	train_sentiments, train_sentences = load_sentiment_data(train_file)
+	test_sentiments, test_sentences = load_sentiment_data(test_file)
+
 	#Average word vectors in sentences in training and test data
 	train_vectors = average_sentences_vector(train_sentences,embed)
 	test_vectors = average_sentences_vector(test_sentences,embed)
@@ -80,13 +84,3 @@ if __name__ == "__main__":
 	embed = load_embedding("../../datasets/glove_data/glove.6B/glove.6B.300d.txt")
 
 	print (test_embedding_on_task(embed))
-
-
-
-
-
-
-
-
-
-
