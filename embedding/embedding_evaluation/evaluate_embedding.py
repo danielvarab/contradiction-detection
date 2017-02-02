@@ -100,16 +100,22 @@ def syntactic_relations(embedding, pairs):
 	RETURNS: nearest word in the embedding with respect to input argument 'vector'
 """
 def nearest_neighbour(embedding, vector, distance_metric="cosine"):
-	best_fit = (None, np.inf)
+	best_fit = None
+	if distance_metric is "euclid":
+		best_fit = (None, np.inf)
+	if distance_metric is "cosine":
+		best_fit = (None, 0)
+
 	for word, embedding in embedding.iteritems():
-		d = 0
 		if distance_metric is "euclid":
 			d = distance.euclidean(vector, embedding)
+			if d < best_fit[1]:
+				best_fit = (word, d)
+
 		if distance_metric is "cosine":
 			d = distance.cosine(vector, embedding)
-
-		if d < best_fit[1]:
-			best_fit = (word, d)
+			if d > best_fit[1]:
+				best_fit = (word, d)
 
 	return best_fit[0]
 
