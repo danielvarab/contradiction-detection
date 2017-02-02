@@ -31,12 +31,20 @@ def load_embedding_from_two_files(name_file, vector_file):
 	with open(name_file, "r") as n_file, open(vector_file) as v_file:
 		names = n_file.readlines()
 		vectors = v_file.readlines()
+<<<<<<< HEAD
 
         dic = {}
         for index, name in enumerate(names):
             row = vectors[index].split()
             dic[name] = np.array(row).astype(float)
         return dic
+=======
+		dic = {}
+		for index, name in enumerate(names):
+			row = vectors[index].split()
+			dic[name.rstrip()] = np.array(row).astype(float)
+		return dic
+>>>>>>> 976f9179f83f6ec4223e9cd843f431faafe2dd9b
 
 """
     INPUT:
@@ -65,7 +73,8 @@ def evaluate_similarity(embedding, X, y):
 	mean_vector = np.mean(matrix, axis=0)
 	for w1, w2 in X:
 		w_emb1, w_emb2 = embedding.get(w1, mean_vector), embedding.get(w2, mean_vector)
-		scores.append(np.dot(w_emb1, w_emb2))
+		score = np.dot(w_emb1, w_emb2)
+		scores.append(score)
 
 	return stats.spearmanr(scores, y).correlation
 
@@ -102,16 +111,22 @@ def syntactic_relations(embedding, pairs):
 	RETURNS: nearest word in the embedding with respect to input argument 'vector'
 """
 def nearest_neighbour(embedding, vector, distance_metric="cosine"):
-	best_fit = (None, np.inf)
+	best_fit = None
+	if distance_metric is "euclid":
+		best_fit = (None, np.inf)
+	if distance_metric is "cosine":
+		best_fit = (None, 0)
+
 	for word, embedding in embedding.iteritems():
-		d = 0
 		if distance_metric is "euclid":
 			d = distance.euclidean(vector, embedding)
+			if d < best_fit[1]:
+				best_fit = (word, d)
+
 		if distance_metric is "cosine":
 			d = distance.cosine(vector, embedding)
-
-		if d < best_fit[1]:
-			best_fit = (word, d)
+			if d > best_fit[1]:
+				best_fit = (word, d)
 
 	return best_fit[0]
 

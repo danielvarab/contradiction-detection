@@ -40,12 +40,13 @@ def load_sentiment_data(path):
 	return sentiments, sentences
 
 def average_sentences_vector(sentences, embed):
-	vectors = np.zeros((len(sentences), 300))
+	dimensions = embed.values()[0].shape[0]
+	vectors = np.zeros((len(sentences), dimensions))
 	skip_count = 0
 	skips = []
 	for i, s in enumerate(sentences):
 		length = len(s)
-		vec = np.zeros(300)
+		vec = np.zeros(dimensions)
 		for w in s:
 			w = w.lower()
 			if w not in embed:
