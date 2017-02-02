@@ -81,3 +81,5 @@ th train.lua \
 -gpuid 1 \
 -savefile $3
 
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING"
+
