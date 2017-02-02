@@ -106,12 +106,35 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
 
 if __name__=='__main__':
 
-  wordVecs = read_word_vecs("sample_vec.txt")
+  name = "glove.6B.300d"
+  wordVecs = read_word_vecs("../../datasets/glove_data/glove.6B/" +name + ".txt")
   synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
   antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
+  ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
+  wnsyn = read_lexicon("lexicons/wordnet-synonyms.txt", wordVecs)
+  wnall = read_lexicon("lexicons/wordnet-synonyms+.txt", wordVecs)
+  fn = read_lexicon("lexicons/framenet.txt", wordVecs)
   numIter = 10
-  outFileName = "out_vec_1.txt"
+  outFileName1 = "{}{}".format(name,"_ppdb_out.txt")
+  outFileName2 = "{}{}".format(name,"_wnsyn_out.txt")
+  outFileName3 = "{}{}".format(name,"_wnall_out.txt")
+  outFileName4 = "{}{}".format(name,"_fn_out.txt")
+  outFileName5 = "{}{}".format(name,"_anto_rf_out.txt")
 
   ''' Enrich the word vectors using ppdb and print the enriched vectors '''
-  # print_word_vecs(retrofit(wordVecs, lexicon, numIter), outFileName)
-  print_word_vecs(retrofit_v2(wordVecs, synonyms, antonyms, numIter), outFileName)
+  print_word_vecs(retrofit(wordVecs, ppdb, numIter), outFileName1)
+  print_word_vecs(retrofit(wordVecs, wnsyn, numIter), outFileName2)
+  print_word_vecs(retrofit(wordVecs, wnall, numIter), outFileName3)
+  print_word_vecs(retrofit(wordVecs, fn, numIter), outFileName4)
+  print_word_vecs(retrofit_v2(wordVecs, synonyms, antonyms, numIter), outFileName5)
+
+
+
+
+
+
+
+
+
+
+

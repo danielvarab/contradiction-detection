@@ -32,9 +32,11 @@ def load_embedding_from_two_files(name_file, vector_file):
 		names = n_file.readlines()
 		vectors = v_file.readlines()
 
-		dic = { value.rstrip():np.array(vectors[index]).astype(float) for index, value in enumerate(names) }
-
-		return dic
+        dic = {}
+        for index, name in enumerate(names):
+            row = vectors[index].split()
+            dic[name] = np.array(row).astype(float)
+        return dic
 
 """
     INPUT:
@@ -146,7 +148,7 @@ if __name__ == "__main__":
 	print("> Loading embedding into memory")
 	embedding = {}
 	if args.v is not None:
-		embedding = load_embedding_from_two_files(args.e, args.v)
+		embedding = load_embedding_from_two_files(args.v, args.e)
 	else:
 		embedding = load_embedding(args.e)
 
