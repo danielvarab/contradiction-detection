@@ -31,9 +31,10 @@ def load_embedding_from_two_files(name_file, vector_file):
 	with open(name_file, "r") as n_file, open(vector_file) as v_file:
 		names = n_file.readlines()
 		vectors = v_file.readlines()
-
-		dic = { value.rstrip():np.array(vectors[index]).astype(float) for index, value in enumerate(names) }
-
+		dic = {}
+		for index, name in enumerate(names):
+			row = vectors[index].split()
+			dic[name.rstrip()] = np.array(row).astype(float)
 		return dic
 
 """
@@ -63,7 +64,8 @@ def evaluate_similarity(embedding, X, y):
 	mean_vector = np.mean(matrix, axis=0)
 	for w1, w2 in X:
 		w_emb1, w_emb2 = embedding.get(w1, mean_vector), embedding.get(w2, mean_vector)
-		scores.append(np.dot(w_emb1, w_emb2))
+		score = np.dot(w_emb1, w_emb2)
+		scores.append(score)
 
 	return stats.spearmanr(scores, y).correlation
 
@@ -152,7 +154,7 @@ if __name__ == "__main__":
 	print("> Loading embedding into memory")
 	embedding = {}
 	if args.v is not None:
-		embedding = load_embedding_from_two_files(args.e, args.v)
+		embedding = load_embedding_from_two_files(args.v, args.e)
 	else:
 		embedding = load_embedding(args.e)
 
