@@ -4,6 +4,8 @@ import numpy as np
 from scipy import stats
 from scipy.spatial import distance
 from similarity import fetch_MEN, fetch_WS353, fetch_SimLex999, fetch_MTurk, fetch_RG65, fetch_RW
+from analogy import fetch_semeval_2012_2
+from sklearn.metrics import pairwise_distances
 
 
 '''Load GRE or TOEFLE task'''
@@ -12,7 +14,7 @@ def load_toefle(path) :
 	with open(path, 'rb') as ant_file:
 		for l in ant_file:
 			a = l.split(':')
-			task.append((a[0].strip(),a[1].strip().split(' '),a[3].strip()))
+			task.append((a[0].strip(), a[1].strip().split(' ') ,a[3].strip()))
 
 	return task
 
@@ -24,13 +26,13 @@ def load_toefle(path) :
         dictionary from string to vector
 """
 def load_embedding_from_two_files(name_file, vector_file):
-    with open(name_file, "r") as n_file, open(vector_file) as v_file:
-        names = n_file.readlines()
-        vectors = v_file.readlines()
+	with open(name_file, "r") as n_file, open(vector_file) as v_file:
+		names = n_file.readlines()
+		vectors = v_file.readlines()
 
-        dic = { value.rstrip():np.array(vectors[index]).astype(float) for index, value in enumerate(names) }
+		dic = { value.rstrip():np.array(vectors[index]).astype(float) for index, value in enumerate(names) }
 
-        return dic
+		return dic
 
 """
     INPUT:
@@ -39,13 +41,13 @@ def load_embedding_from_two_files(name_file, vector_file):
               (seperated by whitespace. first entry denotes the key)
 """
 def load_embedding(emb_file):
-    with open(emb_file, "r") as f:
-        dic = {}
-        rows = f.readlines()
-        for row in rows:
-            attributes = row.split()
-            dic[attributes[0]] = np.array(attributes[1:]).astype(float)
-        return dic
+	with open(emb_file, "r") as f:
+		dic = {}
+		rows = f.readlines()
+		for row in rows:
+			attributes = row.split()
+			dic[attributes[0]] = np.array(attributes[1:]).astype(float)
+		return dic
 
 """
     INPUT:
@@ -53,94 +55,113 @@ def load_embedding(emb_file):
     RETURNS: spearmanr correlation
 """
 def evaluate_similarity(embedding, X, y):
-    scores = []
-    # used to replace embeddings that are not contained in the vocabolary
-    matrix = np.array(embedding.values()).astype(float)
-    mean_vector = np.mean(matrix, axis=0)
-    for w1, w2 in X:
-        w_emb1, w_emb2 = embedding.get(w1, mean_vector), embedding.get(w2, mean_vector)
-        scores.append(np.dot(w_emb1, w_emb2))
+	scores = []
+	# used to replace embeddings that are not contained in the vocabolary
+	matrix = np.array(embedding.values()).astype(float)
+	mean_vector = np.mean(matrix, axis=0)
+	for w1, w2 in X:
+		w_emb1, w_emb2 = embedding.get(w1, mean_vector), embedding.get(w2, mean_vector)
+		scores.append(np.dot(w_emb1, w_emb2))
 
-    return stats.spearmanr(scores, y).correlation
+	return stats.spearmanr(scores, y).correlation
 
+def syntactic_relations(embedding, pairs):
+	words = {}; matrix = []
+	for index, word in enumerate(embedding):
+		words[word] = index
+		matrix.append(embedding[word])
 
-def syntactic_relations(embedding, test_tuples):
-    results = []
-    for abcd in test_tuples:
-        q = abcd[0] - abcd[1] + abcd[2]
-        word = closest_neighbour(embedding, q)
+	inverse_words = { v:k for k, v in words.iteritems() }
 
-        if word == abcd[1]:
-            results.append(1)
-        else:
-            results.append(0)
+	results = []
+	count = 0
+	total = len(pairs)*len(pairs)
+	for (a,b) in pairs:
+		for (c,d) in pairs:
+			print (count, total)
+			count += 1
+			if a is c and b is d: continue;
+			q = embedding[a] - embedding[b] + embedding[c]
 
-    return np.average(results)
+			distances = pairwise_distances(matrix, q.reshape(1, -1), metric="cosine")
+			max_index = distances.argsort(axis=0).flatten()[0]
 
-def closest_neighbour(embedding, vector):
-    best_fit = ("", 999999999999)
-    for word, embedding in embedding.iteritems():
-        dist = numpy.linalg.norm(vector-embedding)
-        if distance < best_fit[1]:
-            best_fit = (word, dist)
+			nearest_word = inverse_words[max_index]
+			if nearest_word == d:
+				results.append(1)
+			else:
+				results.append(0)
 
-    return best_fit[0]
+	return np.average(results)
 
-def toefle(word_embedding, task):
-    euclid_correct = 0; cosine_correct = 0; skip_count = 0
-    for t in task:
-        word, antonyms, gold = t
+def closest_neighbour(embedding, vector, distance_metric="cosine"):
+	best_fit = (None, np.inf)
+	for word, embedding in embedding.iteritems():
+		d = 0
+		if distance_metric is "euclid":
+			d = distance.euclidean(vector, embedding)
+		if distance_metric is "cosine":
+			d = distance.cosine(vector, embedding)
 
-        if word not in word_embedding:
-            skip_count += 1
-            continue
+		if d < best_fit[1]:
+			best_fit = (word, d)
 
-        word_emb = word_embedding[word]
-        options = np.array(antonyms)
-        euclidian = np.argmax(map(lambda option: distance.euclidean(word_embedding[option], word_emb), options))
-		# cosine = np.argmax(map(lambda x: distance.cosine(word_embedding[x],source),options))
-        if (antonyms[euclidian] == gold):
-			euclid_correct += 1
+	return best_fit[0]
 
-        print(antonyms[euclidian], gold)
-		# if (antonyms[cosine] == t[2]):
-		# 	cosine_correct += 1
+def toefle(embedding, tasks, distance_metric="euclid"):
+	results = []
+	distance_func = None
+	mean_vector = np.mean(np.array(embedding.values()), axis=0)
+	for word, relations, gold in tasks:
+		placeholder = np.arange(300)
+		word_emb = embedding.get(word, mean_vector)
+		if distance_metric is "euclid":
+			distance_func = lambda x: distance.euclidean(embedding.get(x, mean_vector), word_emb)
+		if distance_metric is "cosine":
+			distance_func = lambda x: distance.cosine(embedding.get(x, mean_vector), word_emb)
+		index = np.argmax(map(distance_func, relations))
+		if relations[index] == gold:
+			results.append(1)
+		else:
+			results.append(0)
 
-	return (euclid_correct,cosine_correct, skip_count, len(task))
+	return np.average(results)
 
 # if __name__ == "__main__":
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('--e', help="embedding file")
-#     parser.add_argument('--v', help="vocabolary file", default=None)
-#     parser.add_argument('--t', help="toefl file", default=None)
+# 	parser = argparse.ArgumentParser()
+# 	parser.add_argument('--e', help="embedding file")
+# 	parser.add_argument('--v', help="vocabolary file", default=None)
+# 	parser.add_argument('--t', help="toefl file", default=None)
 #
-#     args = parser.parse_args(sys.argv[1:])
+# 	args = parser.parse_args(sys.argv[1:])
 #
-#     print("> Loading embedding into memory")
-#     embedding = {}
-#     if args.v is not None:
-#         embedding = load_embedding_from_two_files(args.e, args.v)
-#     else:
-#         embedding = load_embedding(args.e)
+# 	print("> Loading embedding into memory")
+# 	embedding = {}
+# 	if args.v is not None:
+# 		embedding = load_embedding_from_two_files(args.e, args.v)
+# 	else:
+# 		embedding = load_embedding(args.e)
 #
-#     print("> Done loading embedding")
+# 	print("> Done loading embedding")
+# 	tasks = {
+# 		"MEN": fetch_MEN(),
+# 		"RG-65": fetch_RG65(),
+# 		"WS-353": fetch_WS353()
+# 	}
 #
-#     tasks = {
-#         # "MEN": fetch_MEN(),
-#         # "RG-65": fetch_RG65(),
-#         # "WS-353": fetch_WS353(),
-#     }
+# 	print("> Starting evaluations of embedding")
+# 	print("> Starting word simularity evaluations")
+# 	for task, data in tasks.iteritems():
+# 		score = evaluate_similarity(embedding, data.X, data.y)
+# 		print(task, score)
 #
-#     print("> Starting evaluations of embedding")
-#     for task, data in tasks.iteritems():
-#         score = evaluate_similarity(embedding, data.X, data.y)
-#
-#         print(task, score)
+# 	# Syntactic Relations
+# 	if args.s is not None:
+# 		categories = load_semeval(args.s)
 #
 #
-#     if args.t is not None:
-#         tasks = load_toefle(args.t)
-#
-#         euclidian_correct, consine_correct, skip_count, total_count = toefle(embedding, tasks)
-#
-#         print(euclidian_correct, total_count, skip_count)
+# 	if args.t is not None:
+# 		print("> Starting toefl evaluation")
+# 		tasks = load_toefle(args.t)
+# 		precision = toefle(embedding, tasks)
+# 		print("toefl", precision)
