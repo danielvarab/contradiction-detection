@@ -78,7 +78,6 @@ th train.lua \
 -val_data_file ${DIRECTORY}"/entail-val.hdf5" \
 -test_data_file ${DIRECTORY}"/entail-test.hdf5" \
 -pre_word_vecs ${DIRECTORY}"/glove.hdf5" \
--gpuid 1 \
 -savefile $3
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING"
