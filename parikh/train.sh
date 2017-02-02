@@ -40,8 +40,8 @@ cd $path_to_snli_data
 python "$currentDirectory/split_snli_parikh.py" \
 --n 1 \
 --devfile "snli_1.0_dev.txt" \
---trainfile "snli_1.0_dev.txt" \
---testfile "snli_1.0_dev.txt" \
+--trainfile "snli_1.0_train.txt" \
+--testfile "snli_1.0_test.txt" \
 --output $currentDirectory"/"${splitted_data}
 
 # Preproccess
