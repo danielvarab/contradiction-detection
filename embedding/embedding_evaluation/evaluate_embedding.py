@@ -31,20 +31,12 @@ def load_embedding_from_two_files(name_file, vector_file):
 	with open(name_file, "r") as n_file, open(vector_file) as v_file:
 		names = n_file.readlines()
 		vectors = v_file.readlines()
-<<<<<<< HEAD
 
-        dic = {}
-        for index, name in enumerate(names):
-            row = vectors[index].split()
-            dic[name] = np.array(row).astype(float)
-        return dic
-=======
 		dic = {}
 		for index, name in enumerate(names):
 			row = vectors[index].split()
 			dic[name.rstrip()] = np.array(row).astype(float)
 		return dic
->>>>>>> 976f9179f83f6ec4223e9cd843f431faafe2dd9b
 
 """
     INPUT:
