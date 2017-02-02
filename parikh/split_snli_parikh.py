@@ -9,30 +9,30 @@ def split_data(arguments):
     # train
     file_path = arguments.trainfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "train")
+    write_file(pd.read_csv(file_path, sep="\t"), 550000, arguments.output, "train")
 
     # development
     file_path = arguments.devfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "dev")
+    write_file(pd.read_csv(file_path, sep="\t"), 10000, arguments.output, "dev")
 
     # validation
     file_path = arguments.testfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), arguments, "val")
+    write_file(pd.read_csv(file_path, sep="\t"), 10000, arguments.output, "val")
 
 
-def write_file(df, arguments, type):
+def write_file(df, numberOfSentences, output, type):
     headers = ["sentence1", "sentence2", "gold_label"]
-    if(len(df.index) <= arguments.n):
+    if(len(df.index) <= numberOfSentences):
         sliced = df[[headers[0], headers[1], headers[2]]]
     else:
-        sliced = df[[headers[0], headers[1], headers[2]]].sample(n=arguments.n)
+        sliced = df[[headers[0], headers[1], headers[2]]].sample(n=numberOfSentences)
     for header in headers:
         res = sliced[header]
-        output = arguments.output + type + "-" + header + "-" + str(arguments.n) + "-SNLI.txt"
-        res.to_csv(output, index=False)
-        print("Created file with " + str(arguments.n) + " " + header + " pairs")
+        outputName = output + type + "-" + header + "-" + str(numberOfSentences) + "-SNLI.txt"
+        res.to_csv(outputName, index=False)
+        print("Created file with " + str(numberOfSentences) + " " + header + " pairs")
 
 
 

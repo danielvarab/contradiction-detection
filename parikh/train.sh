@@ -17,9 +17,12 @@
 # Command line Arguments 
 path_to_snli_data=$1
 path_to_glove_vectors=$2
+path_to_output_model=$3
 
 # Variables
-number_of_sentences=30000
+train_number_of_sentences=550000
+dev_number_of_sentences=10000
+val_number_of_sentences=10000
 splitted_data=splitted_data/
 currentDirectory=`pwd`
 
@@ -35,10 +38,10 @@ currentDirectory=`pwd`
 date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
 cd $path_to_snli_data
 python "$currentDirectory/split_snli_parikh.py" \
---n $number_of_sentences \
+--n 1 \
 --devfile "snli_1.0_dev.txt" \
---trainfile "snli_1.0_dev.txt" \
---testfile "snli_1.0_dev.txt" \
+--trainfile "snli_1.0_train.txt" \
+--testfile "snli_1.0_test.txt" \
 --output $currentDirectory"/"${splitted_data}
 
 # Preproccess
@@ -51,27 +54,31 @@ if [ ! -d "$DIRECTORY" ]; then
 fi
 
 python preprocess.py \
---srcfile ${splitted_data}"train-sentence1-"${number_of_sentences}"-SNLI.txt" \
---targetfile $splitted_data"train-sentence2-"$number_of_sentences"-SNLI.txt" \
---labelfile $splitted_data"train-gold_label-"$number_of_sentences"-SNLI.txt" \
---srcvalfile $splitted_data"val-sentence1-"$number_of_sentences"-SNLI.txt" \
---targetvalfile $splitted_data"val-sentence2-"$number_of_sentences"-SNLI.txt" \
---labelvalfile $splitted_data"val-gold_label-"$number_of_sentences"-SNLI.txt" \
---srctestfile $splitted_data"dev-sentence1-"$number_of_sentences"-SNLI.txt" \
---targettestfile $splitted_data"dev-sentence1-"$number_of_sentences"-SNLI.txt" \
---labeltestfile $splitted_data"dev-gold_label-"$number_of_sentences"-SNLI.txt" \
+--srcfile ${splitted_data}"train-sentence1-"${train_number_of_sentences}"-SNLI.txt" \
+--targetfile $splitted_data"train-sentence2-"$train_number_of_sentences"-SNLI.txt" \
+--labelfile $splitted_data"train-gold_label-"$train_number_of_sentences"-SNLI.txt" \
+--srcvalfile $splitted_data"val-sentence1-"$val_number_of_sentences"-SNLI.txt" \
+--targetvalfile $splitted_data"val-sentence2-"$val_number_of_sentences"-SNLI.txt" \
+--labelvalfile $splitted_data"val-gold_label-"$val_number_of_sentences"-SNLI.txt" \
+--srctestfile $splitted_data"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
+--targettestfile $splitted_data"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
+--labeltestfile $splitted_data"dev-gold_label-"$dev_number_of_sentences"-SNLI.txt" \
 --outputfile ${DIRECTORY}"/entail" \
 --glove $path_to_glove_vectors
 
-#python get_pretrain_vecs.py \
-#--glove $path_to_glove_vectors \
-#--outputfile ${DIRECTORY}"/glove.hdf5" \
-#--dictionary ${DIRECTORY}"/entail.word.dict" \
+python get_pretrain_vecs.py \
+--glove $path_to_glove_vectors \
+--outputfile ${DIRECTORY}"/glove.hdf5" \
+--dictionary ${DIRECTORY}"/entail.word.dict" \
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"TRAINING"
-#th train.lua \
-#-data_file ${DIRECTORY}"/entail-train.hdf5" \
-#-val_data_file ${DIRECTORY}"/entail-val.hdf5" \
-#-test_data_file ${DIRECTORY}"/entail-test.hdf5" \
-#-pre_word_vecs ${DIRECTORY}"/glove.hdf5"
+th train.lua \
+-data_file ${DIRECTORY}"/entail-train.hdf5" \
+-val_data_file ${DIRECTORY}"/entail-val.hdf5" \
+-test_data_file ${DIRECTORY}"/entail-test.hdf5" \
+-pre_word_vecs ${DIRECTORY}"/glove.hdf5" \
+-savefile $3
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING"
+
