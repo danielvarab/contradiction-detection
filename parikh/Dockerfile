@@ -10,6 +10,8 @@ RUN apt-get -qq install git --yes
 RUN apt-get -qq install wget
 RUN sudo apt-get -qq install python-pip python-dev build-essential --yes
 RUN pip install --upgrade pip
+RUN apt-get install nano
+RUN apt-get install pciutils --yes
 
 
 # install torch
