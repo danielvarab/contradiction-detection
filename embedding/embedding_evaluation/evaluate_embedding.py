@@ -1,11 +1,13 @@
 import sys
 import argparse
 import numpy as np
+from random import shuffle
 from scipy import stats
 from scipy.spatial import distance
 from similarity import fetch_MEN, fetch_WS353, fetch_SimLex999, fetch_MTurk, fetch_RG65, fetch_RW
 from analogy import fetch_semeval_2012_2
 from sklearn.metrics import pairwise_distances
+from eval_sentiment import load_sentiment_data, test_embedding_on_task
 
 
 '''Load GRE or TOEFLE task'''
@@ -66,27 +68,26 @@ def evaluate_similarity(embedding, X, y):
 	return stats.spearmanr(scores, y).correlation
 
 def syntactic_relations(embedding, pairs):
-	words = {}; matrix = []
-	for index, word in enumerate(embedding):
-		words[word] = index
-		matrix.append(embedding[word])
-
-	inverse_words = { v:k for k, v in words.iteritems() }
+	count = 0 # debuggin purposes
+	total = len(pairs)*len(pairs)
 
 	results = []
-	count = 0
-	total = len(pairs)*len(pairs)
 	for (a,b) in pairs:
 		for (c,d) in pairs:
-			print (count, total)
+			# debuggin purposes
 			count += 1
-			if a is c and b is d: continue;
+			print (count, total)
+
+			if a is c and b is d:
+				print("skipped as pairs are equal")
+				continue
+
 			q = embedding[a] - embedding[b] + embedding[c]
+			nearest_word = nearest_neighbour(embedding, q)
+			# debuggin purposes
 
-			distances = pairwise_distances(matrix, q.reshape(1, -1), metric="cosine")
-			max_index = distances.argsort(axis=0).flatten()[0]
+			print ("d:{}".format(d), "guessed:{}".format(nearest_word))
 
-			nearest_word = inverse_words[max_index]
 			if nearest_word == d:
 				results.append(1)
 			else:
@@ -94,7 +95,11 @@ def syntactic_relations(embedding, pairs):
 
 	return np.average(results)
 
-def closest_neighbour(embedding, vector, distance_metric="cosine"):
+
+"""
+	RETURNS: nearest word in the embedding with respect to input argument 'vector'
+"""
+def nearest_neighbour(embedding, vector, distance_metric="cosine"):
 	best_fit = (None, np.inf)
 	for word, embedding in embedding.iteritems():
 		d = 0
@@ -127,41 +132,61 @@ def toefle(embedding, tasks, distance_metric="euclid"):
 
 	return np.average(results)
 
-# if __name__ == "__main__":
-# 	parser = argparse.ArgumentParser()
-# 	parser.add_argument('--e', help="embedding file")
-# 	parser.add_argument('--v', help="vocabolary file", default=None)
-# 	parser.add_argument('--t', help="toefl file", default=None)
-#
-# 	args = parser.parse_args(sys.argv[1:])
-#
-# 	print("> Loading embedding into memory")
-# 	embedding = {}
-# 	if args.v is not None:
-# 		embedding = load_embedding_from_two_files(args.e, args.v)
-# 	else:
-# 		embedding = load_embedding(args.e)
-#
-# 	print("> Done loading embedding")
-# 	tasks = {
-# 		"MEN": fetch_MEN(),
-# 		"RG-65": fetch_RG65(),
-# 		"WS-353": fetch_WS353()
-# 	}
-#
-# 	print("> Starting evaluations of embedding")
-# 	print("> Starting word simularity evaluations")
-# 	for task, data in tasks.iteritems():
-# 		score = evaluate_similarity(embedding, data.X, data.y)
-# 		print(task, score)
-#
-# 	# Syntactic Relations
-# 	if args.s is not None:
-# 		categories = load_semeval(args.s)
-#
-#
-# 	if args.t is not None:
-# 		print("> Starting toefl evaluation")
-# 		tasks = load_toefle(args.t)
-# 		precision = toefle(embedding, tasks)
-# 		print("toefl", precision)
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--e', help="embedding file")
+	parser.add_argument('--v', help="vocabolary file", default=None)
+	parser.add_argument('--t', help="toefl file", default=None)
+	parser.add_argument('--syn_rel', help="Syntactic Relatedness file", default=None) # this can be empty as we fetch it
+	parser.add_argument('--sa_train', help="Sentiment Analysis train data", default=None)
+	parser.add_argument('--sa_test', help="Sentiment Analysis test data", default=None)
+
+	args = parser.parse_args(sys.argv[1:])
+
+	print("> Loading embedding into memory")
+	embedding = {}
+	if args.v is not None:
+		embedding = load_embedding_from_two_files(args.e, args.v)
+	else:
+		embedding = load_embedding(args.e)
+
+	print("> Done loading embedding")
+
+	print("> Starting evaluations of embedding...")
+
+	print("> Starting Word Simularity Evaluations")
+	tasks = {
+		"MEN": fetch_MEN(),
+		"RG-65": fetch_RG65(),
+		"WS-353": fetch_WS353()
+	}
+	for task, data in tasks.iteritems():
+		score = evaluate_similarity(embedding, data.X, data.y)
+		print(task, score)
+
+	# syntactic relatedness
+	if args.syn_rel is not None:
+		print("> Starting Syntatic Relatedness evaluation")
+		semeval = fetch_semeval_2012_2() # categories
+		for category, pairs in semeval.X.iteritems():
+			shuffle(pairs) # in-place.... alright python
+			precision = syntactic_relations(embedding, pairs[:2])
+			print(category, precision)
+	else:
+		print(">> Skipped syn-rel. no file (doesn't actually need file)")
+
+	if args.t is not None:
+		print("> Starting Synonym Selection (TOEFL) evaluation")
+		tasks = load_toefle(args.t)
+		precision = toefle(embedding, tasks)
+		print("toefl", precision)
+	else:
+		print(">> Skipped Synonym Selection (TOEFL)")
+
+	# Sentiment Analysis (SA)
+	if args.sa_train is not None and args.sa_test is not None:
+		print("> Starting Sentiment Analysis Evaluation")
+		SA_score = test_embedding_on_task(embedding, args.sa_train, args.sa_test)
+		print("Sentiment Analysis", SA_score)
+	else:
+		print(">> Skipped Sentiment Analysis")
