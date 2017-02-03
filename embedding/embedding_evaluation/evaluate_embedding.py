@@ -51,7 +51,7 @@ def load_embedding(emb_file):
 		for row in f:
 			words = row.split()
 			word = words[0].rstrip()
-			vector = np.array(words[1:])
+			vector = np.array(words[1:]).astype(float)
 			dic[word] = vector
 
 		return dic
