@@ -45,13 +45,16 @@ def load_embedding_from_two_files(name_file, vector_file):
               (seperated by whitespace. first entry denotes the key)
 """
 def load_embedding(emb_file):
-	with open(emb_file, "r") as f:
+	with open(emb_file) as f:
 		dic = {}
-		rows = f.readlines()
-		for row in rows:
-			attributes = row.split()
-			dic[attributes[0]] = np.array(attributes[1:]).astype(float)
+		for row in f:
+			words = row.split()
+			word = words[0]
+			vector = np.array(words[1:])
+			dic[word] = vector
+
 		return dic
+
 
 """
     INPUT:
