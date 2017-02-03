@@ -50,7 +50,7 @@ def load_embedding(emb_file):
 		dic = {}
 		for row in f:
 			words = row.split()
-			word = words[0]
+			word = words[0].rstrip()
 			vector = np.array(words[1:])
 			dic[word] = vector
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 	print("> Starting Word Simularity Evaluations")
 	if args.s is not None:
 		eval_all_sim(embedding, args.s)
-	
+
 	#tasks = {
 	#	"MEN": fetch_MEN(),
 	#	"RG-65": fetch_RG65(),
