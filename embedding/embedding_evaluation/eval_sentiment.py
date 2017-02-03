@@ -27,14 +27,14 @@ def load_sentiment_data(path):
 	with codecs.open(path, 'rb', 'utf8') as task_file:
 		for l in task_file:
 			tree = Tree.fromstring(l)
-		  	flat = tree.flatten()
+			flat = tree.flatten()
 		  	#Transform from 5 to 2 label problem
 
-		  	if (int(flat.label())<2): #adjust negatives
-		  		sentiments.append(0)
+			if (int(flat.label())<2): #adjust negatives
+				sentiments.append(0)
 				sentences.append(flat.leaves())
-		  	elif (int(flat.label())>2): #adjust positives
-		  		sentiments.append(1)
+			elif (int(flat.label())>2): #adjust positives
+				sentiments.append(1)
 				sentences.append(flat.leaves())
 
 	return sentiments, sentences
