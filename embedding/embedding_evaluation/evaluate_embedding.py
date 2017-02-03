@@ -8,6 +8,7 @@ from similarity import fetch_MEN, fetch_WS353, fetch_SimLex999, fetch_MTurk, fet
 from analogy import fetch_semeval_2012_2
 from sklearn.metrics import pairwise_distances
 from eval_sentiment import load_sentiment_data, test_embedding_on_task
+from all_wordsim import eval_all_sim
 
 
 '''Load GRE or TOEFLE task'''
@@ -145,6 +146,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', help="embedding file")
 	parser.add_argument('--v', help="vocabolary file", default=None)
+	parser.add_argument('--s', help="similarity file directory", default=None)
 	parser.add_argument('--t', help="toefl file", default=None)
 	parser.add_argument('--syn_rel', help="Syntactic Relatedness file", default=None) # this can be empty as we fetch it
 	parser.add_argument('--sa_train', help="Sentiment Analysis train data", default=None)
@@ -164,14 +166,17 @@ if __name__ == "__main__":
 	print("> Starting evaluations of embedding...")
 
 	print("> Starting Word Simularity Evaluations")
-	tasks = {
-		"MEN": fetch_MEN(),
-		"RG-65": fetch_RG65(),
-		"WS-353": fetch_WS353()
-	}
-	for task, data in tasks.iteritems():
-		score = evaluate_similarity(embedding, data.X, data.y)
-		print(task, score)
+	if args.s is not None:
+		eval_all_sim(embedding, args.s)
+	
+	#tasks = {
+	#	"MEN": fetch_MEN(),
+	#	"RG-65": fetch_RG65(),
+	#	"WS-353": fetch_WS353()
+	#}
+	#for task, data in tasks.iteritems():
+	#		score = evaluate_similarity(embedding, data.X, data.y)
+	#	print(task, score)
 
 	# syntactic relatedness
 	if args.syn_rel is not None:
