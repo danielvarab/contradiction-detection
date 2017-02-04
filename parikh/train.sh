@@ -71,6 +71,7 @@ python get_pretrain_vecs.py \
 --glove $path_to_glove_vectors \
 --outputfile ${DIRECTORY}"/glove.hdf5" \
 --dictionary ${DIRECTORY}"/entail.word.dict" \
+--d $dimensions
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"TRAINING"
