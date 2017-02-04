@@ -27,25 +27,26 @@ def load_sentiment_data(path):
 	with codecs.open(path, 'rb', 'utf8') as task_file:
 		for l in task_file:
 			tree = Tree.fromstring(l)
-		  	flat = tree.flatten()
+			flat = tree.flatten()
 		  	#Transform from 5 to 2 label problem
 
-		  	if (int(flat.label())<2): #adjust negatives
-		  		sentiments.append(0)
+			if (int(flat.label())<2): #adjust negatives
+				sentiments.append(0)
 				sentences.append(flat.leaves())
-		  	elif (int(flat.label())>2): #adjust positives
-		  		sentiments.append(1)
+			elif (int(flat.label())>2): #adjust positives
+				sentiments.append(1)
 				sentences.append(flat.leaves())
 
 	return sentiments, sentences
 
 def average_sentences_vector(sentences, embed):
-	vectors = np.zeros((len(sentences), 300))
+	dimensions = embed.values()[0].shape[0]
+	vectors = np.zeros((len(sentences), dimensions))
 	skip_count = 0
 	skips = []
 	for i, s in enumerate(sentences):
 		length = len(s)
-		vec = np.zeros(300)
+		vec = np.zeros(dimensions)
 		for w in s:
 			w = w.lower()
 			if w not in embed:

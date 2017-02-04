@@ -8,6 +8,7 @@ from similarity import fetch_MEN, fetch_WS353, fetch_SimLex999, fetch_MTurk, fet
 from analogy import fetch_semeval_2012_2
 from sklearn.metrics import pairwise_distances
 from eval_sentiment import load_sentiment_data, test_embedding_on_task
+from all_wordsim import eval_all_sim
 
 
 '''Load GRE or TOEFLE task'''
@@ -32,8 +33,10 @@ def load_embedding_from_two_files(name_file, vector_file):
 		names = n_file.readlines()
 		vectors = v_file.readlines()
 
-		dic = { value.rstrip():np.array(vectors[index]).astype(float) for index, value in enumerate(names) }
-
+		dic = {}
+		for index, name in enumerate(names):
+			row = vectors[index].split()
+			dic[name.rstrip()] = np.array(row).astype(float)
 		return dic
 
 """
@@ -43,13 +46,16 @@ def load_embedding_from_two_files(name_file, vector_file):
               (seperated by whitespace. first entry denotes the key)
 """
 def load_embedding(emb_file):
-	with open(emb_file, "r") as f:
+	with open(emb_file) as f:
 		dic = {}
-		rows = f.readlines()
-		for row in rows:
-			attributes = row.split()
-			dic[attributes[0]] = np.array(attributes[1:]).astype(float)
+		for row in f:
+			words = row.split()
+			word = words[0].rstrip()
+			vector = np.array(words[1:]).astype(float)
+			dic[word] = vector
+
 		return dic
+
 
 """
     INPUT:
@@ -63,7 +69,8 @@ def evaluate_similarity(embedding, X, y):
 	mean_vector = np.mean(matrix, axis=0)
 	for w1, w2 in X:
 		w_emb1, w_emb2 = embedding.get(w1, mean_vector), embedding.get(w2, mean_vector)
-		scores.append(np.dot(w_emb1, w_emb2))
+		score = np.dot(w_emb1, w_emb2)
+		scores.append(score)
 
 	return stats.spearmanr(scores, y).correlation
 
@@ -100,16 +107,22 @@ def syntactic_relations(embedding, pairs):
 	RETURNS: nearest word in the embedding with respect to input argument 'vector'
 """
 def nearest_neighbour(embedding, vector, distance_metric="cosine"):
-	best_fit = (None, np.inf)
+	best_fit = None
+	if distance_metric is "euclid":
+		best_fit = (None, np.inf)
+	if distance_metric is "cosine":
+		best_fit = (None, 0)
+
 	for word, embedding in embedding.iteritems():
-		d = 0
 		if distance_metric is "euclid":
 			d = distance.euclidean(vector, embedding)
+			if d < best_fit[1]:
+				best_fit = (word, d)
+
 		if distance_metric is "cosine":
 			d = distance.cosine(vector, embedding)
-
-		if d < best_fit[1]:
-			best_fit = (word, d)
+			if d > best_fit[1]:
+				best_fit = (word, d)
 
 	return best_fit[0]
 
@@ -136,6 +149,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', help="embedding file")
 	parser.add_argument('--v', help="vocabolary file", default=None)
+	parser.add_argument('--s', help="similarity file directory", default=None)
 	parser.add_argument('--t', help="toefl file", default=None)
 	parser.add_argument('--syn_rel', help="Syntactic Relatedness file", default=None) # this can be empty as we fetch it
 	parser.add_argument('--sa_train', help="Sentiment Analysis train data", default=None)
@@ -146,7 +160,7 @@ if __name__ == "__main__":
 	print("> Loading embedding into memory")
 	embedding = {}
 	if args.v is not None:
-		embedding = load_embedding_from_two_files(args.e, args.v)
+		embedding = load_embedding_from_two_files(args.v, args.e)
 	else:
 		embedding = load_embedding(args.e)
 
@@ -155,14 +169,17 @@ if __name__ == "__main__":
 	print("> Starting evaluations of embedding...")
 
 	print("> Starting Word Simularity Evaluations")
-	tasks = {
-		"MEN": fetch_MEN(),
-		"RG-65": fetch_RG65(),
-		"WS-353": fetch_WS353()
-	}
-	for task, data in tasks.iteritems():
-		score = evaluate_similarity(embedding, data.X, data.y)
-		print(task, score)
+	if args.s is not None:
+		eval_all_sim(embedding, args.s)
+
+	#tasks = {
+	#	"MEN": fetch_MEN(),
+	#	"RG-65": fetch_RG65(),
+	#	"WS-353": fetch_WS353()
+	#}
+	#for task, data in tasks.iteritems():
+	#		score = evaluate_similarity(embedding, data.X, data.y)
+	#	print(task, score)
 
 	# syntactic relatedness
 	if args.syn_rel is not None:

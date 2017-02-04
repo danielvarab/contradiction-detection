@@ -6,7 +6,7 @@ import re
 import sys
 
 from copy import deepcopy
-from autograd import grad
+from scipy.spatial import distance
 import numpy as np
 
 isNumber = re.compile(r'\d+.*')
@@ -35,6 +35,18 @@ def read_word_vecs(filename):
 
   sys.stderr.write("Vectors read from: "+filename+" \n")
   return wordVectors
+
+''' Read all the word vectors '''
+def load_embedding_from_two_files(name_file, vector_file):
+  with open(name_file, "r") as n_file, open(vector_file) as v_file:
+    names = n_file.readlines()
+    vectors = v_file.readlines()
+
+    dic = {}
+    for index, name in enumerate(names):
+      row = vectors[index].split()
+      dic[name.rstrip()] = np.array(row).astype(float)
+    return dic
 
 ''' Write word vectors to file '''
 def print_word_vecs(wordVectors, outFileName):
@@ -86,12 +98,20 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
         synonym_neighbours = set(synonyms.get(word, [])).intersection(vocab)
         antonym_neighbours = set(antonyms.get(word, [])).intersection(vocab)
 
-        alpha = len(synonym_neighbours)
+        alpha = len(synonym_neighbours)+len(antonym_neighbours)
         if alpha is 0: alpha = 1
+        #alpha = alpha
         beta  = 1
         gamma = 1
 
-        new_vector = alpha * words[word] # origin cost
+        orig_vector = words[word]
+        last_vector = new_words[word]
+        v_sum = last_vector + orig_vector
+        v_diff = last_vector - orig_vector
+        if (np.sqrt(v_diff.dot(v_diff))>np.sqrt(v_sum.dot(v_sum))):
+          orig_vector = -orig_vector
+
+        new_vector = alpha * orig_vector # origin cost
 
         for synonym in synonym_neighbours: # synonym cost
             new_vector += (beta * new_words[synonym])
@@ -99,19 +119,34 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
         for antonym in antonym_neighbours: # antonym cost
             new_vector -= (gamma * new_words[antonym])
 
-        new_words[word] = new_words - new_vector/(2*(alpha+beta+gamma))
+        new_words[word] = new_vector/((alpha+beta*len(synonym_neighbours)+gamma*len(synonym_neighbours)))
 
     return new_words
 
 
 if __name__=='__main__':
+    if len(sys.argv) < 3: sys.exit()
 
-  wordVecs = read_word_vecs("sample_vec.txt")
-  synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
-  antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
-  numIter = 10
-  outFileName = "out_vec_1.txt"
+    emb_path = sys.argv[1]
+    name = sys.argv[2]
+    
+    wordVecs = read_word_vecs(emb_path)
+    synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
+    antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
+    ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
+    wnsyn = read_lexicon("lexicons/wordnet-synonyms.txt", wordVecs)
+    wnall = read_lexicon("lexicons/wordnet-synonyms+.txt", wordVecs)
+    fn = read_lexicon("lexicons/framenet.txt", wordVecs)
+    numIter = 10
+    outFileName1 = "{}{}".format(name,"_ppdb_out.txt")
+    outFileName2 = "{}{}".format(name,"_wnsyn_out.txt")
+    outFileName3 = "{}{}".format(name,"_wnall_out.txt")
+    outFileName4 = "{}{}".format(name,"_fn_out.txt")
+    outFileName5 = "{}{}".format(name,"_new_anto_rf_out.txt")
 
-  ''' Enrich the word vectors using ppdb and print the enriched vectors '''
-  # print_word_vecs(retrofit(wordVecs, lexicon, numIter), outFileName)
-  print_word_vecs(retrofit_v2(wordVecs, synonyms, antonyms, numIter), outFileName)
+    ''' Enrich the word vectors using ppdb and print the enriched vectors '''
+    print_word_vecs(retrofit(wordVecs, ppdb, numIter), outFileName1)
+    print_word_vecs(retrofit(wordVecs, wnsyn, numIter), outFileName2)
+    print_word_vecs(retrofit(wordVecs, wnall, numIter), outFileName3)
+    print_word_vecs(retrofit(wordVecs, fn, numIter), outFileName4)
+    print_word_vecs(retrofit_v2(wordVecs, synonyms, antonyms, numIter), outFileName5)
