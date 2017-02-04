@@ -25,13 +25,15 @@ def main():
   parser.add_argument('--glove', help='pretrained word vectors', type=str, default='')
   parser.add_argument('--outputfile', help="output hdf5 file", type=str,
                       default='data/glove.hdf5')
+  parser.add_argument('--d', help="number of dimensions", type=int,
+                      default=300)
   
   args = parser.parse_args()
   vocab = open(args.dictionary, "r").read().split("\n")[:-1]
   vocab = map(lambda x: (x.split()[0], int(x.split()[1])), vocab)
   word2idx = {x[0]: x[1] for x in vocab}
   print("vocab size is " + str(len(vocab)))
-  w2v_vecs = np.random.normal(size = (len(vocab), 300))
+  w2v_vecs = np.random.normal(size = (len(vocab), args.d))
   w2v = load_glove_vec(args.glove, word2idx)
       
   print("num words in pretrained model is " + str(len(w2v)))
