@@ -25,4 +25,5 @@ ACL2012_wordVectorsTextFile.zip)
 
 ### Multilingual Vectors
 
-- Downloadable via the authors site wordvectors.org ([direct link](http://www.wordvectors.org/web-eacl14-vectors/de-projected-en-512.txt.gz))
+1. Downloadable via the authors site wordvectors.org ([direct link](http://www.wordvectors.org/web-eacl14-vectors/de-projected-en-512.txt.gz))
+2. This is a zip including 2 files, vocab.txt and wordVectors.txt. To produce a combined file, run the following file: `paste -d " " vocab.txt wordVectors.txt > multi-vectors.txt`
