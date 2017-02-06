@@ -37,7 +37,7 @@ def read_word_vecs(filename):
   return wordVectors
 
 ''' Read all the word vectors '''
-def load_embedding_from_two_files(name_file, vector_file):
+def read_word_vecs_from_two_files(name_file, vector_file):
   with open(name_file, "r") as n_file, open(vector_file) as v_file:
     names = n_file.readlines()
     vectors = v_file.readlines()
@@ -46,6 +46,10 @@ def load_embedding_from_two_files(name_file, vector_file):
     for index, name in enumerate(names):
       row = vectors[index].split()
       dic[name.rstrip()] = np.array(row).astype(float)
+      ''' normalize weight vector '''
+      dic[name.rstrip()] /= math.sqrt((dic[name.rstrip()]**2).sum() + 1e-6)
+
+
     return dic
 
 ''' Write word vectors to file '''
@@ -130,7 +134,7 @@ if __name__=='__main__':
     emb_path = sys.argv[1]
     name = sys.argv[2]
     
-    wordVecs = read_word_vecs(emb_path)
+    wordVecs = read_word_vecs_from_two_files("../../datasets/ACL2012_wordVectorsTextFile/vocab.txt",emb_path)
     synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
     antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
     ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
