@@ -168,6 +168,8 @@ if __name__ == "__main__":
 	print("> Starting Word Simularity Evaluations")
 	if args.s is not None:
 		eval_all_sim(embedding, args.s)
+	else:
+		print(">> Skipped Word Similarity")
 	
 	#tasks = {
 	#	"MEN": fetch_MEN(),
