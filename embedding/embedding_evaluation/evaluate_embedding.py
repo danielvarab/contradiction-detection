@@ -46,13 +46,16 @@ def load_embedding_from_two_files(name_file, vector_file):
               (seperated by whitespace. first entry denotes the key)
 """
 def load_embedding(emb_file):
-	with open(emb_file, "r") as f:
+	with open(emb_file) as f:
 		dic = {}
-		rows = f.readlines()
-		for row in rows:
-			attributes = row.split()
-			dic[attributes[0]] = np.array(attributes[1:]).astype(float)
+		for row in f:
+			words = row.split()
+			word = words[0].rstrip()
+			vector = np.array(words[1:]).astype(float)
+			dic[word] = vector
+
 		return dic
+
 
 """
     INPUT:
@@ -170,7 +173,6 @@ if __name__ == "__main__":
 		eval_all_sim(embedding, args.s)
 	else:
 		print(">> Skipped Word Similarity")
-	
 	#tasks = {
 	#	"MEN": fetch_MEN(),
 	#	"RG-65": fetch_RG65(),
