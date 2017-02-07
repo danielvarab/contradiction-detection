@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import sys
 import os
+import csv
 
 
 def split_data(arguments):
@@ -19,7 +20,9 @@ def split_data(arguments):
     # validation
     file_path = arguments.testfile
     print(file_path)
-    write_file(pd.read_csv(file_path, sep="\t"), 10000, arguments.output, "val")
+    remove_quotes = lambda x:x.replace('"', '')
+    write_file(pd.read_csv(file_path, sep="\t", converters={'param': remove_quotes, 'value': remove_quotes}), 10000, arguments.output, "val")
+
 
 
 def write_file(df, numberOfSentences, output, type):
@@ -28,6 +31,26 @@ def write_file(df, numberOfSentences, output, type):
         sliced = df[[headers[0], headers[1], headers[2]]]
     else:
         sliced = df[[headers[0], headers[1], headers[2]]].sample(n=numberOfSentences)
+    
+    # sort based on length of sentence1
+    sliced["sentence1_length"] = (sliced.sentence1.str.len())
+    sliced = sliced.sort_values(["sentence1_length"], ascending=True)
+    
+    # remove all non-gold_label values
+    sliced = sliced[sliced[headers[2]] != "-"]
+    #remove quotes
+    #sliced["sentence1"] = sliced.sentence1.str.replace('"', '')
+    #sliced["sentence2"] = sliced['sentence2'].map(lambda x: x.replace("\"", ""))
+    
+    
+    # append NULL
+    sliced['sentence1'] = 'NULL ' + sliced['sentence1'].astype(str)
+    sliced['sentence2'] = 'NULL ' + sliced['sentence2'].astype(str)
+    #print(sliced[["sentence1","sentence1_length"]])
+    
+    #sliced["sentence1"] = sliced.sentence1.str.replace('"', '')
+    #sliced["sentence2"] = sliced.sentence2.str.replace('"', '')
+
     for header in headers:
         res = sliced[header]
         outputName = output + type + "-" + header + "-" + str(numberOfSentences) + "-SNLI.txt"
