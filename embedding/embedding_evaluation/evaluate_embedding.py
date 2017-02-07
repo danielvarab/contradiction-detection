@@ -36,11 +36,11 @@ if __name__ == "__main__":
 	if args.ss:
 		print("\n")
 		print('======================================')
-		print('Synonym Selection Evaluation')
+		print('Synonym/Antonym Selection Evaluation')
 		print('======================================')
 		tasks = load_toefle("./synonym_selection_tasks/testset950.txt")
 		precision = synonym_selection(embedding, tasks)
-		print("> {0}: \t{1} (accuracy) - skipped {2}/{3}".format("testset950", precision, "TODO", "uses mean vector"))
+		print("> {0}: \t{1} (accuracy) - skipped {2}/{3}".format("testset950 (GRE)", precision, "TODO", "uses mean vector"))
 	else:
 		print(">> Skipped Synonym Selection (TOEFL)")
 
