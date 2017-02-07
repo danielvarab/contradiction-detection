@@ -31,10 +31,13 @@ def write_file(df, numberOfSentences, output, type):
         sliced = df[[headers[0], headers[1], headers[2]]]
     else:
         sliced = df[[headers[0], headers[1], headers[2]]].sample(n=numberOfSentences)
+    
+    # sort based on length of sentence1
     sliced["sentence1_length"] = (sliced.sentence1.str.len())
-
     sliced = sliced.sort_values(["sentence1_length"], ascending=True)
     
+    # remove all non-gold_label values
+    sliced = sliced[sliced[headers[2]] != "-"]
     #remove quotes
     #sliced["sentence1"] = sliced.sentence1.str.replace('"', '')
     #sliced["sentence2"] = sliced['sentence2'].map(lambda x: x.replace("\"", ""))
