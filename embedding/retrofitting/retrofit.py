@@ -25,7 +25,7 @@ def read_word_vecs(filename):
   else: fileObject = open(filename, 'r')
 
   for line in fileObject:
-    line = line.strip().lower()
+    # line = line.strip().lower() # CHANGED: daniel removed this, as this actually reduces the embeddings vocab
     word = line.split()[0]
     wordVectors[word] = numpy.zeros(len(line.split())-1, dtype=float)
     for index, vecVal in enumerate(line.split()[1:]):
@@ -129,28 +129,48 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
 
 
 if __name__=='__main__':
-    if len(sys.argv) < 3: sys.exit()
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--e', action="store_true", default=False, help="embedding file")
+	parser.add_argument('--ppdb', action="store_true", default=False, help="retrofit with ppdb")
+	parser.add_argument('--wnsyn', action="store_true", default=False, help="retrofit with word net synonyms")
+	parser.add_argument('--wnall', action="store_true", default=False, help="retrofit with word net all")
+	parser.add_argument('--fn', action="store_true", default=False, help="retrofit with frame net")
+	parser.add_argument('--a_s_rf', action="store_true", default=False, help="modified antonym + synonym retrofit")
+	args = parser.parse_args(sys.argv[1:])
 
-    emb_path = sys.argv[1]
-    name = sys.argv[2]
-    
-    wordVecs = read_word_vecs_from_two_files("../../datasets/ACL2012_wordVectorsTextFile/vocab.txt",emb_path)
-    synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
-    antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
-    ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
-    wnsyn = read_lexicon("lexicons/wordnet-synonyms.txt", wordVecs)
-    wnall = read_lexicon("lexicons/wordnet-synonyms+.txt", wordVecs)
-    fn = read_lexicon("lexicons/framenet.txt", wordVecs)
-    numIter = 10
-    outFileName1 = "{}{}".format(name,"_ppdb_out.txt")
-    outFileName2 = "{}{}".format(name,"_wnsyn_out.txt")
-    outFileName3 = "{}{}".format(name,"_wnall_out.txt")
-    outFileName4 = "{}{}".format(name,"_fn_out.txt")
-    outFileName5 = "{}{}".format(name,"_new_anto_rf_out.txt")
+	name = args.e
+	wordVecs = read_word_vecs(args.e)
 
-    ''' Enrich the word vectors using ppdb and print the enriched vectors '''
-    print_word_vecs(retrofit(wordVecs, ppdb, numIter), outFileName1)
-    print_word_vecs(retrofit(wordVecs, wnsyn, numIter), outFileName2)
-    print_word_vecs(retrofit(wordVecs, wnall, numIter), outFileName3)
-    print_word_vecs(retrofit(wordVecs, fn, numIter), outFileName4)
-    print_word_vecs(retrofit_v2(wordVecs, synonyms, antonyms, numIter), outFileName5)
+	numIter = 10
+
+	''' Enrich the word vectors using ppdb and print the enriched vectors '''
+	if args.ppdb:
+		ppdb_outfile = "{}{}".format(name, "_ppdb_out.txt")
+		ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
+		new_emb = retrofit(wordVecs, ppdb, numIter)
+		print_word_vecs(new_emb, ppdb_outfile)
+
+	if args.wnsyn:
+		wnsyn_outfile = "{}{}".format(name, "_wnsyn_out.txt")
+		wnsyn = read_lexicon("lexicons/wordnet-synonyms.txt", wordVecs)
+		new_emb = retrofit(wordVecs, wnsyn, numIter)
+		print_word_vecs(new_emb, wnsyn_outfile)
+
+	if args.wnall:
+		wnall_outfile = "{}{}".format(name, "_wnall_out.txt")
+		wnall = read_lexicon("lexicons/wordnet-synonyms+.txt", wordVecs)
+		new_emb = retrofit(wordVecs, wnall, numIter)
+		print_word_vecs(new_emb, wnall_outfile)
+
+	if args.fn:
+		fn_outfile = "{}{}".format(name, "_fn_out.txt")
+		fn = read_lexicon("lexicons/framenet.txt", wordVecs)
+		new_emb = retrofit(wordVecs, fn, numIter)
+		print_word_vecs(new_emb, fn_outfile)
+
+	if args.a_s_rf:
+		new_retrofit_outfile = "{}{}".format(name, "_new_anto_rf_out.txt")
+		synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
+		antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
+		new_emb = retrofit_v2(wordVecs, synonyms, antonyms, numIter)
+		print_word_vecs(new_emb, new_retrofit_outfile)
