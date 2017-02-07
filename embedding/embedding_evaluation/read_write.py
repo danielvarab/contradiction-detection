@@ -9,7 +9,7 @@ from collections import Counter
 from operator import itemgetter
 
 ''' Read all the word vectors and normalize them '''
-def read_and_normalize_embedding(filename):
+def read_word_vectors(filename):
   word_vecs = {}
   if filename.endswith('.gz'): file_object = gzip.open(filename, 'r')
   else: file_object = open(filename, 'r')
@@ -39,7 +39,7 @@ def read_and_normalize_embedding(filename):
 
 
 """
-def load_embedding(emb_file, normalize=False):
+def load_embedding(emb_file, normalize=False, toLower=False):
 	word_vectors = {}
 	f = open(emb_file)
 
@@ -47,6 +47,8 @@ def load_embedding(emb_file, normalize=False):
 		row = row.split()
 		word = row[0].rstrip()
 		vector = np.array(row[1:], dtype=np.float32)
+		if toLower:
+			word = word.lower()
 		if normalize:
 			vector /= math.sqrt((vector**2).sum() + 1e-6)
 		word_vectors[word] = vector
