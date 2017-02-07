@@ -2,7 +2,7 @@ import numpy as np
 from ranking import *
 
 """ synonym_selection (TOEFL) """
-def synonym_selection(embedding, tasks, distance_metric="euclid"):
+def synonym_selection(embedding, tasks, distance_metric="cosine"):
 	results = []
 	distance_func = None
 	mean_vector = np.mean(np.array(embedding.values()), axis=0)
