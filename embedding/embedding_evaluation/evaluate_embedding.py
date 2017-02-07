@@ -18,7 +18,8 @@ if __name__ == "__main__":
 	args = parser.parse_args(sys.argv[1:])
 
 	print("> Loading embedding into memory")
-	embedding = load_embedding(args.e)
+	# embedding = read_word_vectors(args.e)
+	embedding = load_embedding(args.e, normalize=True)
 	print("> Done loading embedding")
 
 	print("> Starting evaluations of embedding...")
