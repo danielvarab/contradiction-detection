@@ -4,6 +4,7 @@ import math
 import numpy
 import re
 import sys
+import os
 
 from copy import deepcopy
 from scipy.spatial import distance
