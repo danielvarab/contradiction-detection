@@ -28,13 +28,15 @@ def read_word_vecs(filename, normalize):
   for line in fileObject:
     # line = line.strip().lower() # CHANGED: daniel removed this, as this actually reduces the embeddings vocab
     word = line.split()[0]
-    wordVectors[word] = numpy.zeros(len(line.split())-1, dtype=float)
+    vector = numpy.zeros(len(line.split())-1, dtype=float)
     for index, vecVal in enumerate(line.split()[1:]):
-      wordVectors[word][index] = float(vecVal)
+      vector[index] = float(vecVal)
 
+    ''' normalize weight vector '''
     if normalize:
-        ''' normalize weight vector '''
-        wordVectors[word] /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
+        vector /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
+
+    wordVectors[word] = vector
 
   sys.stderr.write("Vectors read from: "+filename+" \n")
   return wordVectors
