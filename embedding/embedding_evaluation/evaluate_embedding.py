@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 from eval_sentiment import load_sentiment_data, test_embedding_on_task
 from word_simularity import eval_all_sim
-from synonym_selection import syn_ant_selection
+from synonym_selection import antonym_selection
 from syntactic_relation import *
 from read_write import *
 
