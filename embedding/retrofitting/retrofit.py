@@ -163,7 +163,8 @@ if __name__=='__main__':
 
 	if args.wnall:
 		wnall_outfile = "{}{}".format(name, "_wnall_out.txt")
-		wnall = read_lexicon("lexicons/wordnet-synonyms+.txt", wordVecs)
+		wn_all_lex_path = rel_path("lexicons/wordnet-synonyms+.txt")
+		wnall = read_lexicon(wn_all_lex_path, wordVecs)
 		new_emb = retrofit(wordVecs, wnall, numIter)
 		print_word_vecs(new_emb, wnall_outfile)
 
