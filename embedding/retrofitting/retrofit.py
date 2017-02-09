@@ -20,7 +20,7 @@ def norm_word(word):
     return word.lower()
 
 ''' Read all the word vectors and normalize them '''
-def read_word_vecs(filename):
+def read_word_vecs(filename, normalize):
   wordVectors = {}
   if filename.endswith('.gz'): fileObject = gzip.open(filename, 'r')
   else: fileObject = open(filename, 'r')
@@ -31,8 +31,10 @@ def read_word_vecs(filename):
     wordVectors[word] = numpy.zeros(len(line.split())-1, dtype=float)
     for index, vecVal in enumerate(line.split()[1:]):
       wordVectors[word][index] = float(vecVal)
-    ''' normalize weight vector '''
-    wordVectors[word] /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
+
+    if normalize:
+        ''' normalize weight vector '''
+        wordVectors[word] /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
 
   sys.stderr.write("Vectors read from: "+filename+" \n")
   return wordVectors
@@ -119,6 +121,7 @@ def rel_path(path):
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', help="embedding file")
+	parser.add_argument("--normalize", action="store_true", help="normalize embedding")
 	parser.add_argument('--ppdb', action="store_true", default=False, help="retrofit with ppdb")
 	parser.add_argument('--wnsyn', action="store_true", default=False, help="retrofit with word net synonyms")
 	parser.add_argument('--wnall', action="store_true", default=False, help="retrofit with word net all")
@@ -127,7 +130,7 @@ if __name__=='__main__':
 	args = parser.parse_args(sys.argv[1:])
 
 	name = args.e
-	wordVecs = read_word_vecs(args.e)
+	wordVecs = read_word_vecs(args.e, args.normalize)
 
 	numIter = 10
 
