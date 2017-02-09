@@ -127,6 +127,8 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
 
     return new_words
 
+def rel_path(path):
+	return os.path.join(os.path.dirname(__file__), path)
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
@@ -146,13 +148,15 @@ if __name__=='__main__':
 	''' Enrich the word vectors using ppdb and print the enriched vectors '''
 	if args.ppdb:
 		ppdb_outfile = "{}{}".format(name, "_ppdb_out.txt")
-		ppdb = read_lexicon("lexicons/ppdb-xl.txt", wordVecs)
+		ppdb_lex_path = rel_path("lexicons/ppdb-xl.txt")
+		ppdb = read_lexicon(ppdb_lex_path, wordVecs)
 		new_emb = retrofit(wordVecs, ppdb, numIter)
 		print_word_vecs(new_emb, ppdb_outfile)
 
 	if args.wnsyn:
 		wnsyn_outfile = "{}{}".format(name, "_wnsyn_out.txt")
-		wnsyn = read_lexicon("lexicons/wordnet-synonyms.txt", wordVecs)
+		wn_lex_path = rel_path("lexicons/wordnet-synonyms.txt")
+		wnsyn = read_lexicon(wn_lex_path, wordVecs)
 		new_emb = retrofit(wordVecs, wnsyn, numIter)
 		print_word_vecs(new_emb, wnsyn_outfile)
 
@@ -164,13 +168,16 @@ if __name__=='__main__':
 
 	if args.fn:
 		fn_outfile = "{}{}".format(name, "_fn_out.txt")
-		fn = read_lexicon("lexicons/framenet.txt", wordVecs)
+		lexicon_path = rel_path("lexicons/framenet.txt")
+		fn = read_lexicon(lexicon_path, wordVecs)
 		new_emb = retrofit(wordVecs, fn, numIter)
 		print_word_vecs(new_emb, fn_outfile)
 
 	if args.a_s_rf:
 		new_retrofit_outfile = "{}{}".format(name, "_new_anto_rf_out.txt")
-		synonyms = read_lexicon("lexicons/synonym.txt", wordVecs)
-		antonyms = read_lexicon("lexicons/antonym.txt", wordVecs)
+		syn_lex_path = rel_path("lexicons/synonym.txt")
+		ant_lex_path = rel_path("lexicons/antonym.txt")
+		synonyms = read_lexicon(syn_lex_path, wordVecs)
+		antonyms = read_lexicon(ant_lex_path, wordVecs)
 		new_emb = retrofit_v2(wordVecs, synonyms, antonyms, numIter)
 		print_word_vecs(new_emb, new_retrofit_outfile)
