@@ -132,7 +132,7 @@ def rel_path(path):
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--e', action="store_true", default=False, help="embedding file")
+	parser.add_argument('--e', help="embedding file")
 	parser.add_argument('--ppdb', action="store_true", default=False, help="retrofit with ppdb")
 	parser.add_argument('--wnsyn', action="store_true", default=False, help="retrofit with word net synonyms")
 	parser.add_argument('--wnall', action="store_true", default=False, help="retrofit with word net all")
