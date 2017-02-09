@@ -37,21 +37,6 @@ def read_word_vecs(filename):
   sys.stderr.write("Vectors read from: "+filename+" \n")
   return wordVectors
 
-''' Read all the word vectors '''
-def read_word_vecs_from_two_files(name_file, vector_file):
-  with open(name_file, "r") as n_file, open(vector_file) as v_file:
-    names = n_file.readlines()
-    vectors = v_file.readlines()
-
-    dic = {}
-    for index, name in enumerate(names):
-      row = vectors[index].split()
-      dic[name.rstrip()] = np.array(row).astype(float)
-      ''' normalize weight vector '''
-      dic[name.rstrip()] /= math.sqrt((dic[name.rstrip()]**2).sum() + 1e-6)
-
-
-    return dic
 
 ''' Write word vectors to file '''
 def print_word_vecs(wordVectors, outFileName):
