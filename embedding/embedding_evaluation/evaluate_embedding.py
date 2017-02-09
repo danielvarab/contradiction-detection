@@ -45,7 +45,7 @@ if __name__ == "__main__":
 		print('======================================')
 		gre_path = rel_path("synonym_selection_tasks/testset950.txt")
 		tasks = load_toefle(gre_path)
-		precision = syn_ant_selection(embedding, tasks)
+		precision = antonym_selection(embedding, tasks)
 		print("> {0}: \t{1} (accuracy) - skipped {2}/{3}".format("testset950 (GRE)", precision, "TODO", "uses mean vector"))
 	else:
 		print(">> Skipped Synonym Selection (TOEFL)")

@@ -1,8 +1,8 @@
 import numpy as np
 from ranking import *
 
-""" synonym_selection (TOEFL) """
-def syn_ant_selection(embedding, tasks):
+""" antonym selection """
+def antonym_selection(embedding, tasks):
 	results = []
 	distance_func = None
 	mean_vector = np.mean(np.array(embedding.values()), axis=0)
