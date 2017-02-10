@@ -231,13 +231,6 @@ def build_cooccur(vocab, corpus, window_size=10, min_count=None):
 def sim_cost(w1, w2, bias):
     return np.dot(w1,w2) + bias
 
-# def sim_derivative(w1, w2, bias, neg):
-#     if neg:
-#         s = np.exp(-sim_cost(w1,w2,bias))
-#         return -(s)/(s+1)
-#     else:
-#         s = np.exp(sim_cost(w1,w2,bias))
-#         return -(s)/(s+1)
 
 def expit(x):
     try:
@@ -245,8 +238,8 @@ def expit(x):
         val = 1.0 / (1.0 + val)
         return val
     except TypeError as e:
-        print >> sys.stderr, "X VALUE: %str" % str(x)
-        print >> sys.stderr, "Exception is: %s" % str(e)
+        logger.info("X VALUE: %str" % str(x))
+        logger.info("Exception is: %s" % str(e))
         raise Exception('X VALUE ERROR')
 
 
@@ -259,8 +252,8 @@ def sym_cost(word, synonyms, bias):
             cost = cost + np.log(expit(val))
 
         except TypeError as e:
-            print >> sys.stderr, "SYM VAL VALUE: %str" % str(val)
-            print >> sys.stderr, "Exception is: %s" % str(e)
+            logger.info("SYM VAL VALUE: %str" % str(val))
+            logger.info("Exception is: %s" % str(e))
             raise Exception("SYM CALC ERROR")
     return cost
 
@@ -273,8 +266,8 @@ def ant_cost(word, antonyms, bias):
             cost = cost + np.log(expit(val))
 
         except TypeError as e:
-            print >> sys.stderr, "ANT VAL VALUE: %str" % str(val)
-            print >> sys.stderr, "Exception is: %s" % str(e)
+            logger.info("ANT VAL VALUE: %str" % str(val))
+            logger.info("Exception is: %s" % str(e))
             raise Exception("ANT CALC ERROR")
 
     return cost
@@ -340,10 +333,12 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
         # Compute cost
         #
         #   $$ J = f(X_{ij}) (J')^2 $$
-        beta = 100
+        beta = 1
         gamma = 3.2
+        delta = 1.0/100.0
         def cost(v_main, v_context, bias):
-            weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
+            #weight = (cooccurrence / x_max) ** alpha if cooccurrence < x_max else 1
+            weight = cooccurrence
 
             #sym_c = -(sym_cost(params[0], v_synonyms, params[2]))
             #ant_c = -(ant_cost(params[0], v_antonyms, params[2]))
@@ -354,7 +349,7 @@ def run_iter(vocab, data, learning_rate=0.05, x_max=100, alpha=0.75):
             ant_c = ant_cost(v_main, v_antonyms, bias)
 
 
-            cost = weight * np.log(expit(sim_cost(v_main, v_context, bias))) + beta * (syn_c + gamma * ant_c)
+            cost = delta * weight * np.log(expit(sim_cost(v_main, v_context, bias))) + beta * (syn_c + gamma * ant_c)
 
             return cost
         
