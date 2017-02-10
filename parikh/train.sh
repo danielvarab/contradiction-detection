@@ -22,7 +22,8 @@ GPU_ID=$3
 # Variables
 currentDirectory=`pwd`
 tmp=$(basename "$PATH_TO_EMBEDDING")
-OUTPUT_FOLDER="${tmp%.*}"
+EMBEDDINGS="${tmp%.*}"
+OUTPUT_FOLDER=${EMBEDDINGS}
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
@@ -33,6 +34,10 @@ elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		Quitting to avoid overriding previously generated results."
 		exit 1;
 fi
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS "\n""
+date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER} "\n""
+
 
 # Splitting data
 date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
