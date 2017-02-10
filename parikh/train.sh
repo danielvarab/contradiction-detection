@@ -30,8 +30,7 @@ if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
-		echo "A folder named ${OUTPUT_FOLDER} does already exists -"\n \
-        "Quitting to avoid overriding previously generated results."
+		echo "A folder named ${OUTPUT_FOLDER} does already exists. Quitting to avoid overriding previously generated results."
 		exit 1;
 fi
 
@@ -44,7 +43,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
 python process-snli.py --data_folder $PATH_TO_SNLI --out_folder $OUTPUT_FOLDER
 
 # Preproccess data
-date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 1/2"
 python preprocess.py \
 --srcfile ${OUTPUT_FOLDER}/"src-train.txt" \
 --targetfile ${OUTPUT_FOLDER}/"targ-train.txt" \
@@ -58,6 +57,7 @@ python preprocess.py \
 --outputfile ${OUTPUT_FOLDER}"/entail" \
 --glove $PATH_TO_EMBEDDING \
 
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 2/2"
 python get_pretrain_vecs.py \
 --glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
