@@ -17,13 +17,22 @@
 # Command line Arguments 
 PATH_TO_SNLI=$1
 PATH_TO_EMBEDDING=$2
-tmp=$(basename "$PATH_TO_EMBEDDING")
-OUTPUT_FOLDER="${tmp%.*}"
-GPU_ID=$4
+GPU_ID=$3
 
 # Variables
 currentDirectory=`pwd`
+tmp=$(basename "$PATH_TO_EMBEDDING")
+OUTPUT_FOLDER="${tmp%.*}"
 
+if [ ! -d "$OUTPUT_FOLDER" ]; then
+	  # Control will enter here if $preprocess_directory doesn't exist.
+	  mkdir $OUTPUT_FOLDER
+elif [[ -d "$OUTPUT_FOLDER" ]]; then
+		# Found a matching folder name, quitting. 
+		echo "A folder named ${OUTPUT_FOLDER} does already exists. \
+		Quitting to avoid overriding previously generated results."
+		exit 1;
+fi
 
 # Splitting data
 date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
@@ -45,7 +54,7 @@ python preprocess.py \
 --glove $PATH_TO_EMBEDDING \
 
 python get_pretrain_vecs.py \
---glove $PATH_TO_EMBEDDING\
+--glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
 --dictionary ${OUTPUT_FOLDER}"/entail.word.dict"
 
