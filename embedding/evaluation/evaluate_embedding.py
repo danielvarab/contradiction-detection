@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 	embedding_files = [args.e]
 	if args.d is not None:
-		embedding_files = [join(args.d, f) for f in listdir(args.d) if isfile(join(args.d, f))]
+		embedding_files = [join(args.d, f) for f in listdir(args.d) if isfile(join(args.d, f)) and f.endswith(".txt")]
 
 	tab_print([ "Embedding", "MEN", "RG-65", "WS-353", "GRE", "SA" ])
 
