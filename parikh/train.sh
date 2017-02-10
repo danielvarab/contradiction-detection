@@ -22,7 +22,7 @@ GPU_ID=$3
 # Variables
 currentDirectory=`pwd`
 tmp=$(basename "$PATH_TO_EMBEDDING")
-EMBEDDINGS="${tmp%.*}"
+EMBEDDINGS=${tmp%.*}
 OUTPUT_FOLDER=${EMBEDDINGS}
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
