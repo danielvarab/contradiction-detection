@@ -34,6 +34,18 @@ elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		exit 1;
 fi
 
+# Close STDOUT file descriptor
+exec 1<&-
+# Close STDERR FD
+exec 2<&-
+
+# Open STDOUT as $LOG_FILE file for read and write.
+exec 1<>${OUTPUT_FOLDER}/${EMBEDDINGS}.log.txt
+
+# Redirect STDERR to STDOUT
+exec 2>&1
+
+
 date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
 date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
 
