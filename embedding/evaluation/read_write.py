@@ -39,7 +39,7 @@ def read_word_vectors(filename):
 
 
 """
-def load_embedding(emb_file, normalize, toLower=False):
+def load_embedding(emb_file, normalize, to_lower):
 	word_vectors = {}
 	f = open(emb_file)
 
@@ -47,7 +47,7 @@ def load_embedding(emb_file, normalize, toLower=False):
 		row = row.split()
 		word = row[0].rstrip()
 		vector = np.array(row[1:], dtype=np.float32)
-		if toLower:
+		if to_lower:
 			word = word.lower()
 		if normalize:
 			vector /= math.sqrt((vector**2).sum() + 1e-6)

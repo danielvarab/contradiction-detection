@@ -10,7 +10,7 @@ from os.path import isfile, join
 
 from eval_sentiment import load_sentiment_data, test_embedding_on_task
 from word_simularity import eval_all_sim
-from synonym_selection import antonym_selection
+from antonym_selection import antonym_selection
 from syntactic_relation import *
 from read_write import *
 
@@ -30,6 +30,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', default=None, help="embedding file")
 	parser.add_argument('--d', default=None, help="embedding directory, containing embedding files")
+	parser.add_argument('--tolower', action="store_true", default=False, help="parse embedding by tolowering")
 	parser.add_argument('--ws', action="store_true", default=False)
 	parser.add_argument('--ss', action="store_true", default=False)
 	parser.add_argument('--sa', action="store_true", default=False)
@@ -44,12 +45,12 @@ if __name__ == "__main__":
 	if args.d is not None:
 		embedding_files = [join(args.d, f) for f in listdir(args.d) if isfile(join(args.d, f)) and f.endswith(".txt")]
 
-	tab_print([ "Embedding", "MEN", "RG-65", "WS-353", "GRE", "SA" ])
+	tab_print([ "Embedding", "MEN", "RG-65", "WS-353", "GRE(cos)", "GRE(dot)", "SA" ])
 
 	for e_file in embedding_files:
 		eprint("> Loading embedding into memory from {}".format(e_file))
 		# embedding = read_word_vectors(args.e)
-		embedding = load_embedding(emb_file=e_file, normalize=True)
+		embedding = load_embedding(emb_file=e_file, normalize=True, to_lower=args.tolower)
 		eprint("> Done loading embedding from {}".format(e_file))
 
 		results = {}
@@ -65,8 +66,10 @@ if __name__ == "__main__":
 		if args.ss:
 			gre_path = rel_path("synonym_selection_tasks/testset950.txt")
 			tasks = load_toefle(gre_path)
-			precision = antonym_selection(embedding, tasks)
-			results["GRE"] = precision
+			precision_cos = antonym_selection(embedding, tasks, metric="cosine")
+			precision_dot = antonym_selection(embedding, tasks, metric="dot")
+			results["GREc"] = precision_cos
+			results["GREd"] = precision_dot
 		else:
 			eprint(">> Skipped Antonym Selection")
 
@@ -84,10 +87,11 @@ if __name__ == "__main__":
 		MEN = results.get("EN-MEN-TR-3k.txt", skipped)
 		RG65 = results.get("EN-RG-65.txt", skipped)
 		WS353 = results.get("EN-WS-353-ALL.txt", skipped)
-		GRE = results.get("GRE", skipped)
+		GREc = results.get("GREc", skipped)
+		GREd = results.get("GREd", skipped)
 		SA = results.get("SA", skipped)
 
 
-		tab_print([ e_file.split("/")[-1], MEN, RG65, WS353, GRE, SA])
+		tab_print([ e_file.split("/")[-1], MEN, RG65, WS353, GREc, GREd, SA])
 
 		eprint(">> Done evaluating {}\n".format(e_file))
