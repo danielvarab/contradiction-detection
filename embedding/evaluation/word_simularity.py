@@ -40,6 +40,7 @@ def evaluate__all_ws(embedding, task_dir):
 
 
 def eval_all_sim(word_vecs, word_sim_dir):
+	results = {}
 	for i, filename in enumerate(os.listdir(word_sim_dir)):
 		manual_dict, auto_dict = ({}, {})
 		not_found, total_size = (0, 0)
@@ -53,4 +54,6 @@ def eval_all_sim(word_vecs, word_sim_dir):
 				not_found += 1
 			total_size += 1
 		score = spearmans_rho(assign_ranks(manual_dict), assign_ranks(auto_dict))
-		print("> {0}: \t{1} (spearmans) - skipped {2}/{3}".format(filename, score, not_found, total_size))
+		# print("> {0}: \t{1} (spearmans) - skipped {2}/{3}".format(filename, score, not_found, total_size))
+		results[filename] = score
+	return results
