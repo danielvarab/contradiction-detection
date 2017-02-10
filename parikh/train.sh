@@ -30,8 +30,8 @@ if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
-		echo "A folder named ${OUTPUT_FOLDER} does already exists." \
-		"'\n'Quitting to avoid overriding previously generated results."
+		echo "A folder named ${OUTPUT_FOLDER} does already exists -"\n \
+        "Quitting to avoid overriding previously generated results."
 		exit 1;
 fi
 
