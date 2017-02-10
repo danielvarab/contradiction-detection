@@ -27,16 +27,16 @@ OUTPUT_FOLDER=${EMBEDDINGS}
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
-	  mkdir $OUTPUT_FOLDER
+	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
-		echo "A folder named ${OUTPUT_FOLDER} does already exists. \
-		Quitting to avoid overriding previously generated results."
+		echo "A folder named ${OUTPUT_FOLDER} does already exists." \
+		"'\n'Quitting to avoid overriding previously generated results."
 		exit 1;
 fi
 
-date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS "\n""
-date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER} "\n""
+date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
 
 
 # Splitting data
