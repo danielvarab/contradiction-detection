@@ -30,6 +30,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', default=None, help="embedding file")
 	parser.add_argument('--d', default=None, help="embedding directory, containing embedding files")
+	parser.add_argument('--tolower', action="store_true", default=False, help="parse embedding by tolowering")
 	parser.add_argument('--ws', action="store_true", default=False)
 	parser.add_argument('--ss', action="store_true", default=False)
 	parser.add_argument('--sa', action="store_true", default=False)
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 	for e_file in embedding_files:
 		eprint("> Loading embedding into memory from {}".format(e_file))
 		# embedding = read_word_vectors(args.e)
-		embedding = load_embedding(emb_file=e_file, normalize=True)
+		embedding = load_embedding(emb_file=e_file, normalize=True, to_lower=args.tolower)
 		eprint("> Done loading embedding from {}".format(e_file))
 
 		results = {}
