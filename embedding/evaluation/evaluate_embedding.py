@@ -23,7 +23,7 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 def tab_print(list):
-	print("{:>50} {:>16} {:>16} {:>16} {:>16} {:>16}".format(*list))
+	print("{:>50} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16}".format(*list))
 
 
 if __name__ == "__main__":
