@@ -15,76 +15,75 @@
 
 
 # Command line Arguments 
-path_to_snli_data=$1
-path_to_glove_vectors=$2
-dimensions=$3
-path_to_output=$4
-gpuid=$5
+PATH_TO_SNLI=$1
+PATH_TO_EMBEDDING=$2
+GPU_ID=$3
 
 # Variables
-train_number_of_sentences=550000
-dev_number_of_sentences=10000
-val_number_of_sentences=10000
-splitted_data=splitted_data/
 currentDirectory=`pwd`
+tmp=$(basename "$PATH_TO_EMBEDDING")
+EMBEDDINGS=${tmp%.*}
+OUTPUT_FOLDER=${EMBEDDINGS}
 
-# Use FD 19 to capture the debug stream caused by "set -x":
-#exec 19>my-script.txt
-# Tell bash about it  (there's nothing special about 19, its arbitrary)
-#BASH_XTRACEFD=19
-
-# turn on the debug stream:
-#set -x
-
-# Splitting data
-#date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
-#cd $path_to_snli_data
-#python "$currentDirectory/split_snli_parikh.py" \
-#--n 1 \
-#--devfile "snli_1.0_dev.txt" \
-#--trainfile "snli_1.0_train.txt" \
-#--testfile "snli_1.0_test.txt" \
-#--output $currentDirectory"/"${splitted_data}
-
-# Preproccess
-date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA"
-cd $currentDirectory
-DIRECTORY=$path_to_output
-if [ ! -d "$DIRECTORY" ]; then
-  # Control will enter here if $DIRECTORY doesn't exist.
-  mkdir $DIRECTORY
+if [ ! -d "$OUTPUT_FOLDER" ]; then
+	  # Control will enter here if $preprocess_directory doesn't exist.
+	  mkdir ${OUTPUT_FOLDER}
+elif [[ -d "$OUTPUT_FOLDER" ]]; then
+		# Found a matching folder name, quitting. 
+		echo "A folder named ${OUTPUT_FOLDER} does already exists. Quitting to avoid overriding previously generated results."
+		exit 1;
 fi
 
-python preprocess.py \
---srcfile ${path_to_snli_data}/"train-sentence1-"${train_number_of_sentences}"-SNLI.txt" \
---targetfile ${path_to_snli_data}/"train-sentence2-"$train_number_of_sentences"-SNLI.txt" \
---labelfile ${path_to_snli_data}/"train-gold_label-"$train_number_of_sentences"-SNLI.txt" \
---srcvalfile ${path_to_snli_data}/"val-sentence1-"$val_number_of_sentences"-SNLI.txt" \
---targetvalfile ${path_to_snli_data}/"val-sentence2-"$val_number_of_sentences"-SNLI.txt" \
---labelvalfile ${path_to_snli_data}/"val-gold_label-"$val_number_of_sentences"-SNLI.txt" \
---srctestfile ${path_to_snli_data}/"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
---targettestfile ${path_to_snli_data}/"dev-sentence1-"$dev_number_of_sentences"-SNLI.txt" \
---labeltestfile ${path_to_snli_data}/"dev-gold_label-"$dev_number_of_sentences"-SNLI.txt" \
---outputfile ${DIRECTORY}"/entail" \
---glove $path_to_glove_vectors \
---seqlength 80
+# Close STDOUT file descriptor
+exec 1<&-
+# Close STDERR FD
+exec 2<&-
 
+# Open STDOUT as $LOG_FILE file for read and write.
+exec 1<>${OUTPUT_FOLDER}/${EMBEDDINGS}.log.txt
+
+# Redirect STDERR to STDOUT
+exec 2>&1
+
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
+
+
+# Splitting data
+date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
+python process-snli.py --data_folder $PATH_TO_SNLI --out_folder $OUTPUT_FOLDER
+
+# Preproccess data
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 1/2"
+python preprocess.py \
+--srcfile ${OUTPUT_FOLDER}/"src-train.txt" \
+--targetfile ${OUTPUT_FOLDER}/"targ-train.txt" \
+--labelfile ${OUTPUT_FOLDER}/"label-train.txt" \
+--srcvalfile ${OUTPUT_FOLDER}/"src-dev.txt" \
+--targetvalfile ${OUTPUT_FOLDER}/"targ-dev.txt" \
+--labelvalfile ${OUTPUT_FOLDER}/"label-dev.txt" \
+--srctestfile ${OUTPUT_FOLDER}/"src-test.txt" \
+--targettestfile ${OUTPUT_FOLDER}/"targ-test.txt" \
+--labeltestfile ${OUTPUT_FOLDER}/"label-test.txt" \
+--outputfile ${OUTPUT_FOLDER}"/entail" \
+--glove $PATH_TO_EMBEDDING \
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 2/2"
 python get_pretrain_vecs.py \
---glove $path_to_glove_vectors \
---outputfile ${DIRECTORY}"/glove.hdf5" \
---dictionary ${DIRECTORY}"/entail.word.dict" \
---d $dimensions
+--glove $PATH_TO_EMBEDDING \
+--outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
+--dictionary ${OUTPUT_FOLDER}"/entail.word.dict"
 
 # Training
-date +$'\n'"%R:%D BASH INFO:"$'\t'"TRAINING"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED TRAINING WITH $OUTPUT_FOLDER"
 th train.lua \
--data_file ${DIRECTORY}"/entail-train.hdf5" \
--val_data_file ${DIRECTORY}"/entail-val.hdf5" \
--test_data_file ${DIRECTORY}"/entail-test.hdf5" \
--pre_word_vecs ${DIRECTORY}"/glove.hdf5" \
--gpuid $5 \
--word_vec_size $dimensions \
--savefile ${path_to_output}/result.model
+-data_file ${OUTPUT_FOLDER}"/entail-train.hdf5" \
+-val_data_file ${OUTPUT_FOLDER}"/entail-val.hdf5" \
+-test_data_file ${OUTPUT_FOLDER}"/entail-test.hdf5" \
+-pre_word_vecs ${OUTPUT_FOLDER}"/glove.hdf5" \
+-gpuid $GPU_ID \
+-savefile ${OUTPUT_FOLDER}/result.model
 
-date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $path_to_glove_vectors"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 

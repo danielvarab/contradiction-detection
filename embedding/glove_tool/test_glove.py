@@ -36,38 +36,46 @@ def read_lines(path):
     with open(path) as f:
         return f.read().split("\n")
 
-test_corpus = read_lines("../../datasets/glove_data/snli_sentenceA_72k_train.txt")
+print("Loading corpus and lexica")
 
-synonyms = read_lines("../../datasets/glove_data/synonym_200.txt")
-antonyms = read_lines("../../datasets/glove_data/antonym_200.txt")
+#test_corpus = read_lines("../../datasets/snli_1.0/snli_sentenceA_72k_train.txt")
 
-
+synonyms = read_lines("../../datasets/antonym_synonym/synonym_200.txt")
+antonyms = read_lines("../../datasets/antonym_synonym/antonym_200.txt")
 
 glove.logger.setLevel(logging.ERROR)
+
+print("Building Vocab")
+
 vocab = glove.build_vocab(test_corpus, synonyms, antonyms)
 
 synonyms = glove.build_syncab(synonyms, vocab)
 antonyms = glove.build_antcab(antonyms, vocab)
 
+print("Building Cooccur")
+
 cooccur = glove.build_cooccur(vocab, test_corpus, window_size=1)
 id2word = evaluate.make_id2word(vocab)
 
+print("Training vectors...")
+
 W = glove.train_glove(vocab, synonyms, antonyms, cooccur, vector_size=100, iterations=25)
 
+print("Evaluation:")
 # Merge and normalize word vectors
 W = evaluate.merge_main_context(W)
 
 
 
 def test_similarity():
-    similar = evaluate.most_similar(W, vocab, id2word, 'boy')
+    similar = evaluate.most_similar(W, vocab, id2word, 'trees')
     print(similar)
     logger.info(similar)
 
     #assert_equal('trees', similar[0])
 
 def test_dissimilarity():
-    dissimilar = evaluate.least_similar(W, vocab, id2word, 'boy')
+    dissimilar = evaluate.least_similar(W, vocab, id2word, 'trees')
     print(dissimilar)
     logger.info(dissimilar)
 
@@ -81,11 +89,11 @@ def test_subcost(w1,w2):
 
 test_similarity()
 test_dissimilarity()
-test_subcost('boy','woman')
-test_subcost('boy','walking')
-test_subcost('tall','small')
-test_subcost('small','tall')
-test_subcost('boy','father')
+#test_subcost('boy','woman')
+#test_subcost('boy','walking')
+#test_subcost('tall','small')
+#test_subcost('small','tall')
+#test_subcost('boy','father')
 
 
 
