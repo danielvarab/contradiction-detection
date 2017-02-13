@@ -87,3 +87,26 @@ th train.lua \
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
+
+# Predict 
+date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED PREDICTING WITH ${OUTPUT_FOLDER}/result.model_final.t7"
+th predict.lua \
+-sent1_file ${OUTPUT_FOLDER}/"src-test.txt" \
+-sent2_file ${OUTPUT_FOLDER}/"targ-test.txt" \
+-model ${OUTPUT_FOLDER}/result.model_final.t7
+-word_dict ${OUTPUT_FOLDER}"/entail.word.dict" \
+-label_dict ${OUTPUT_FOLDER}"/entail.label.dict" \
+-output_file ${OUTPUT_FOLDER}"/pred.txt"
+
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE PREDICTING WITH ${OUTPUT_FOLDER}/result.model_final.t7"
+
+
+# Confusion Matrix
+date +$'\n'"%R:%D BASH INFO:"$'\t'"BUILDING CONFUSION MATRIX"
+python confusion.py \
+--labels ${OUTPUT_FOLDER}/"label-train.txt" \
+--predict ${OUTPUT_FOLDER}"/pred.txt" \
+--outfile ${OUTPUT_FOLDER}"/confusion_matrix.txt"
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX "
