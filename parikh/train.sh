@@ -17,7 +17,8 @@
 # Command line Arguments 
 PATH_TO_SNLI=$1
 PATH_TO_EMBEDDING=$2
-GPU_ID=$3
+EMBEDDING_DIMENSION=$3
+GPU_ID=$4
 
 # Variables
 currentDirectory=`pwd`
@@ -83,7 +84,8 @@ th train.lua \
 -test_data_file ${OUTPUT_FOLDER}"/entail-test.hdf5" \
 -pre_word_vecs ${OUTPUT_FOLDER}"/glove.hdf5" \
 -gpuid $GPU_ID \
--savefile ${OUTPUT_FOLDER}/result.model
+-savefile ${OUTPUT_FOLDER}/result.model \
+-word_vec_size EMBEDDING_DIMENSION
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
