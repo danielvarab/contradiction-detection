@@ -75,6 +75,7 @@ python get_pretrain_vecs.py \
 --glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
 --dictionary ${OUTPUT_FOLDER}"/entail.word.dict"
+--d $EMBEDDING_DIMENSION
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED TRAINING WITH $OUTPUT_FOLDER"
@@ -85,7 +86,7 @@ th train.lua \
 -pre_word_vecs ${OUTPUT_FOLDER}"/glove.hdf5" \
 -gpuid $GPU_ID \
 -savefile ${OUTPUT_FOLDER}/result.model \
--word_vec_size EMBEDDING_DIMENSION
+-word_vec_size $EMBEDDING_DIMENSION
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
