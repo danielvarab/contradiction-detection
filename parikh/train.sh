@@ -74,7 +74,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 2/2"
 python get_pretrain_vecs.py \
 --glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
---dictionary ${OUTPUT_FOLDER}"/entail.word.dict"
+--dictionary ${OUTPUT_FOLDER}"/entail.word.dict" \
 --d $EMBEDDING_DIMENSION
 
 # Training
