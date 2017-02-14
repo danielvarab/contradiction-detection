@@ -72,9 +72,9 @@ python preprocess.py \
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 2/2"
 python get_pretrain_vecs.py \
+--dictionary ${OUTPUT_FOLDER}"/entail.word.dict" \
 --glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
---dictionary ${OUTPUT_FOLDER}"/entail.word.dict" \
 --d $EMBEDDING_DIMENSION
 
 # Training
@@ -96,7 +96,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED PREDICTING WITH ${OUTPUT_FOLDER}/resu
 th predict.lua \
 -sent1_file ${OUTPUT_FOLDER}/"src-test.txt" \
 -sent2_file ${OUTPUT_FOLDER}/"targ-test.txt" \
--model ${OUTPUT_FOLDER}/result.model_final.t7
+-model ${OUTPUT_FOLDER}/result.model_final.t7 \
 -word_dict ${OUTPUT_FOLDER}"/entail.word.dict" \
 -label_dict ${OUTPUT_FOLDER}"/entail.label.dict" \
 -output_file ${OUTPUT_FOLDER}"/pred.txt"
