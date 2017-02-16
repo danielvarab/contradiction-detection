@@ -17,12 +17,13 @@
 # Command line Arguments 
 PATH_TO_SNLI=$1
 PATH_TO_EMBEDDING=$2
-GPU_ID=$3
+EMBEDDING_DIMENSION=$3
+GPU_ID=$4
 
 # Variables
 currentDirectory=`pwd`
 tmp=$(basename "$PATH_TO_EMBEDDING")
-EMBEDDINGS="${tmp%.*}"
+EMBEDDINGS=${tmp%.*}
 OUTPUT_FOLDER=${EMBEDDINGS}
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
@@ -30,10 +31,21 @@ if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
-		echo "A folder named ${OUTPUT_FOLDER} does already exists." \
-		"'\n'Quitting to avoid overriding previously generated results."
+		echo "A folder named ${OUTPUT_FOLDER} does already exists. Quitting to avoid overriding previously generated results."
 		exit 1;
 fi
+
+# Close STDOUT file descriptor
+exec 1<&-
+# Close STDERR FD
+exec 2<&-
+
+# Open STDOUT as $LOG_FILE file for read and write.
+exec 1<>${OUTPUT_FOLDER}/${EMBEDDINGS}.log.txt
+
+# Redirect STDERR to STDOUT
+exec 2>&1
+
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
 date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
@@ -44,7 +56,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"SPLITTING DATA"
 python process-snli.py --data_folder $PATH_TO_SNLI --out_folder $OUTPUT_FOLDER
 
 # Preproccess data
-date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA"
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 1/2"
 python preprocess.py \
 --srcfile ${OUTPUT_FOLDER}/"src-train.txt" \
 --targetfile ${OUTPUT_FOLDER}/"targ-train.txt" \
@@ -58,10 +70,12 @@ python preprocess.py \
 --outputfile ${OUTPUT_FOLDER}"/entail" \
 --glove $PATH_TO_EMBEDDING \
 
+date +$'\n'"%R:%D BASH INFO:"$'\t'"PREPROCESSING DATA STEP 2/2"
 python get_pretrain_vecs.py \
+--dictionary ${OUTPUT_FOLDER}"/entail.word.dict" \
 --glove $PATH_TO_EMBEDDING \
 --outputfile ${OUTPUT_FOLDER}"/glove.hdf5" \
---dictionary ${OUTPUT_FOLDER}"/entail.word.dict"
+--d $EMBEDDING_DIMENSION
 
 # Training
 date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED TRAINING WITH $OUTPUT_FOLDER"
@@ -71,7 +85,31 @@ th train.lua \
 -test_data_file ${OUTPUT_FOLDER}"/entail-test.hdf5" \
 -pre_word_vecs ${OUTPUT_FOLDER}"/glove.hdf5" \
 -gpuid $GPU_ID \
--savefile ${OUTPUT_FOLDER}/result.model
+-savefile ${OUTPUT_FOLDER}/result.model \
+-word_vec_size $EMBEDDING_DIMENSION
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
+
+# Predict 
+date +$'\n'"%R:%D BASH INFO:"$'\t'"STARTED PREDICTING WITH ${OUTPUT_FOLDER}/result.model_final.t7"
+th predict.lua \
+-sent1_file ${OUTPUT_FOLDER}/"src-test.txt" \
+-sent2_file ${OUTPUT_FOLDER}/"targ-test.txt" \
+-model ${OUTPUT_FOLDER}/result.model_final.t7 \
+-word_dict ${OUTPUT_FOLDER}"/entail.word.dict" \
+-label_dict ${OUTPUT_FOLDER}"/entail.label.dict" \
+-output_file ${OUTPUT_FOLDER}"/pred.txt"
+
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE PREDICTING WITH ${OUTPUT_FOLDER}/result.model_final.t7"
+
+
+# Confusion Matrix
+date +$'\n'"%R:%D BASH INFO:"$'\t'"BUILDING CONFUSION MATRIX"
+python confusion.py \
+--labels ${OUTPUT_FOLDER}/"label-train.txt" \
+--predict ${OUTPUT_FOLDER}"/pred.txt" \
+--outfile ${OUTPUT_FOLDER}"/confusion_matrix.txt"
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX "

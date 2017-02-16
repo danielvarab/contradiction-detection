@@ -26,7 +26,8 @@ def read_word_vecs(filename, normalize):
   else: fileObject = open(filename, 'r')
 
   for line in fileObject:
-    # line = line.strip().lower() # CHANGED: daniel removed this, as this actually reduces the embeddings vocab
+    if line[0].isupper(): continue;
+    line = line.strip().lower() # NOTE: Daniel: this reduces the word embedding
     word = line.split()[0]
     vector = numpy.zeros(len(line.split())-1, dtype=float)
     for index, vecVal in enumerate(line.split()[1:]):
@@ -34,7 +35,7 @@ def read_word_vecs(filename, normalize):
 
     ''' normalize weight vector '''
     if normalize:
-        vector /= math.sqrt((wordVectors[word]**2).sum() + 1e-6)
+        vector /= math.sqrt((vector**2).sum() + 1e-6)
 
     wordVectors[word] = vector
 
