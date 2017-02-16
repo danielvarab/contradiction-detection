@@ -3,13 +3,14 @@ import argparse
 import numpy as np
 
 def load_embedding(emb_file):
+	print("reading embedding from {0}".format(emb_file))
 	word_vectors = {}
 	f = open(emb_file)
 
 	for row in f:
-		row = row.split()
+		row = row.rstrip().split()
 		word = row[0].rstrip()
-		vector = np.array(row[1:], dtype=np.float32)
+		vector = np.array(row[1:]).astype(np.float32)
 		word = word.lower()
 		word_vectors[word] = vector
 
@@ -33,8 +34,8 @@ parser.add_argument('--out', required=True, help="out embedding file")
 
 args = parser.parse_args(sys.argv[1:])
 
-emb1 = load_embedding(args.emb1)
 emb2 = load_embedding(args.emb2)
+emb1 = load_embedding(args.emb1)
 new_emb = {}
 
 small_mean_vector = np.mean(np.array(emb2.values(), dtype=np.float32), axis=0)
