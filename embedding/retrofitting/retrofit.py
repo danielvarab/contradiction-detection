@@ -166,7 +166,7 @@ if __name__=='__main__':
 		print_word_vecs(new_emb, fn_outfile)
 
 	if args.a_s_rf:
-		new_retrofit_outfile = "{}{}".format(name, "_new_anto_rf_out.txt")
+		new_retrofit_outfile = "{}{}".format(name, "_anto_rf_out.txt")
 		syn_lex_path = rel_path("lexicons/synonym.txt")
 		ant_lex_path = rel_path("lexicons/antonym.txt")
 		synonyms = read_lexicon(syn_lex_path, wordVecs)
