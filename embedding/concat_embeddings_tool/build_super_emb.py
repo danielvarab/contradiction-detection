@@ -8,10 +8,9 @@ def load_embedding(emb_file):
 	f = open(emb_file)
 
 	for row in f:
-		row = row.rstrip().split()
+		row = row.rstrip().split(" ")
 		word = row[0].rstrip()
 		vector = np.array(row[1:]).astype(np.float32)
-		word = word.lower()
 		word_vectors[word] = vector
 
 	return word_vectors
