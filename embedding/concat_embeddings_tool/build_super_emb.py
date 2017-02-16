@@ -27,8 +27,8 @@ def print_word_vecs(wordVectors, outFileName):
 	outFile.close()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--emb1', required=True, help="first embedding file")
-parser.add_argument('--emb2', required=True, help="second embedding file")
+parser.add_argument('--emb1', required=True, help="large embedding file")
+parser.add_argument('--emb2', required=True, help="small embedding file")
 parser.add_argument('--out', required=True, help="out embedding file")
 
 args = parser.parse_args(sys.argv[1:])
@@ -37,11 +37,13 @@ emb1 = load_embedding(args.emb1)
 emb2 = load_embedding(args.emb2)
 new_emb = {}
 
-words = set(emb1.keys()).intersection(emb2.keys())
+small_mean_vector = np.mean(np.array(emb2.values(), dtype=np.float32), axis=0)
 
-for word in words:
-	vector1 = emb1.pop(word) # in hope that this will reduce the dictionaries memory use.
-	vector2 = emb2.pop(word) # dno bout python though...
-	new_emb[word] = np.concatenate((vector1, vector2))
+for word, vector in emb1.iteritems:
+	# in hope that this will reduce the dictionaries memory use.
+	# dno bout python though...
+	vector2 = emb2.pop(word, small_mean_vector)
+
+	new_emb[word] = np.concatenate((vector, vector2))
 
 print_word_vecs(new_emb, args.out)
