@@ -40,7 +40,7 @@ new_emb = {}
 
 small_mean_vector = np.mean(np.array(emb2.values(), dtype=np.float32), axis=0)
 
-for word, vector in emb1.iteritems:
+for word, vector in emb1.iteritems():
 	# in hope that this will reduce the dictionaries memory use.
 	# dno bout python though...
 	vector2 = emb2.pop(word, small_mean_vector)
