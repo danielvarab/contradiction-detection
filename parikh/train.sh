@@ -28,7 +28,7 @@ OUTPUT_FOLDER=${EMBEDDINGS}
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
-	  mkdir ${OUTPUT_FOLDER}
+	  mkdir ${OUTPUT_FOLDER}"-RUNNING"
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
 		echo "A folder named ${OUTPUT_FOLDER} does already exists. Quitting to avoid overriding previously generated results."
@@ -112,4 +112,10 @@ python confusion.py \
 --predict ${OUTPUT_FOLDER}"/pred.txt" \
 --outfile ${OUTPUT_FOLDER}"/confusion_matrix.txt"
 
-date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX "
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX"
+
+if [ -d $OUTPUT_FOLDER"-RUNNING" ]; then
+	  # Control will enter here if $preprocess_directory doesn't exist.
+	  mv ${OUTPUT_FOLDER}"-RUNNING" ${OUTPUT_FOLDER}
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"COMPLETELY DONE!"  
