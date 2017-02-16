@@ -31,7 +31,7 @@ if __name__ == "__main__":
 	rand_embedding = random_embedding_from_existing(embedding)
 
 	if args.o is None:
-		file_name = args.e.rsplit('.', 1)[0] + '.jpg'
+		file_name = args.e.rsplit('.', 1)[0]
 		file_name = "{}{}".format(file_name, ".RANDOM.txt")
 	else:
 		file_name = args.o
