@@ -39,7 +39,7 @@ def read_word_vectors(filename):
 
 
 """
-def load_embedding(emb_file, normalize, to_lower):
+def load_embedding(emb_file, normalize=False, to_lower):
 	word_vectors = {}
 	f = open(emb_file)
 
