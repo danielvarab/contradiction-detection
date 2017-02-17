@@ -24,11 +24,11 @@ GPU_ID=$4
 currentDirectory=`pwd`
 tmp=$(basename "$PATH_TO_EMBEDDING")
 EMBEDDINGS=${tmp%.*}
-OUTPUT_FOLDER=${EMBEDDINGS}
+OUTPUT_FOLDER=${EMBEDDINGS}"-RUNNING"
 
 if [ ! -d "$OUTPUT_FOLDER" ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
-	  mkdir ${OUTPUT_FOLDER}"-RUNNING"
+	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
 		echo "A folder named ${OUTPUT_FOLDER} does already exists. Quitting to avoid overriding previously generated results."
@@ -114,8 +114,8 @@ python confusion.py \
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX"
 
-if [ -d $OUTPUT_FOLDER"-RUNNING" ]; then
+if [ -d $OUTPUT_FOLDER ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
-	  mv ${OUTPUT_FOLDER}"-RUNNING" ${OUTPUT_FOLDER}
+	  mv ${OUTPUT_FOLDER} ${EMBEDDINGS}
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"COMPLETELY DONE!"  
