@@ -114,6 +114,20 @@ python confusion.py \
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX"
 
+# Cleaning
+date +$'\n'"%R:%D BASH INFO:"$'\t'"Cleaning up..."
+#snli
+rm ${OUTPUT_FOLDER}/"src-train.txt"
+rm ${OUTPUT_FOLDER}/"targ-train.txt"
+rm ${OUTPUT_FOLDER}/"label-train.txt"
+rm ${OUTPUT_FOLDER}/"src-dev.txt"
+rm ${OUTPUT_FOLDER}/"targ-dev.txt"
+rm ${OUTPUT_FOLDER}/"label-dev.txt"
+
+#train
+rm ${OUTPUT_FOLDER}"/entail-train.hdf5"
+rm ${OUTPUT_FOLDER}"/result.model.t7"
+
 if [ -d $OUTPUT_FOLDER ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
 	  mv ${OUTPUT_FOLDER} ${EMBEDDINGS}
