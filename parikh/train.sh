@@ -108,7 +108,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE PREDICTING WITH ${OUTPUT_FOLDER}/result.
 # Confusion Matrix
 date +$'\n'"%R:%D BASH INFO:"$'\t'"BUILDING CONFUSION MATRIX"
 python confusion.py \
---labels ${OUTPUT_FOLDER}/"label-train.txt" \
+--labels ${OUTPUT_FOLDER}/"label-test.txt" \
 --predict ${OUTPUT_FOLDER}"/pred.txt" \
 --outfile ${OUTPUT_FOLDER}"/confusion_matrix.txt"
 
