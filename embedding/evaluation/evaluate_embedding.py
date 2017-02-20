@@ -87,7 +87,7 @@ if __name__ == "__main__":
 		MEN = results.get("EN-MEN-TR-3k.txt", skipped)
 		RG65 = results.get("EN-RG-65.txt", skipped)
 		WS353 = results.get("EN-WS-353-ALL.txt", skipped)
-        SIMLEX = results.get("EN-SIMLEX-999.txt", skipped)
+		SIMLEX = results.get("EN-SIMLEX-999.txt", skipped)
 		GREc = results.get("GREc", skipped)
 		GREd = results.get("GREd", skipped)
 		SA = results.get("SA", skipped)
