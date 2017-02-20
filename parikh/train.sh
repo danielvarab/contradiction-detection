@@ -26,8 +26,8 @@ tmp=$(basename "$PATH_TO_EMBEDDING")
 EMBEDDINGS=${tmp%.*}
 OUTPUT_FOLDER=${EMBEDDINGS}"-RUNNING"
 
-if [ ! -d "$OUTPUT_FOLDER" ]; then
-	  # Control will enter here if $preprocess_directory doesn't exist.
+if [ ! -d $OUTPUT_FOLDER ]; then
+	  # create output directory
 	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
