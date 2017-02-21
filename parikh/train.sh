@@ -117,19 +117,20 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX"
 # Cleaning
 date +$'\n'"%R:%D BASH INFO:"$'\t'"Cleaning up..."
 #snli
-rm ${OUTPUT_FOLDER}/"src-train.txt"
-rm ${OUTPUT_FOLDER}/"targ-train.txt"
-rm ${OUTPUT_FOLDER}/"label-train.txt"
-rm ${OUTPUT_FOLDER}/"src-dev.txt"
-rm ${OUTPUT_FOLDER}/"targ-dev.txt"
-rm ${OUTPUT_FOLDER}/"label-dev.txt"
+rm -v ${OUTPUT_FOLDER}/"src-train.txt"
+rm -v ${OUTPUT_FOLDER}/"targ-train.txt"
+rm -v ${OUTPUT_FOLDER}/"label-train.txt"
+rm -v ${OUTPUT_FOLDER}/"src-dev.txt"
+rm -v ${OUTPUT_FOLDER}/"targ-dev.txt"
+rm -v ${OUTPUT_FOLDER}/"label-dev.txt"
 
 #train
-rm ${OUTPUT_FOLDER}"/entail-train.hdf5"
-rm ${OUTPUT_FOLDER}"/result.model.t7"
+rm -v ${OUTPUT_FOLDER}"/entail-train.hdf5"
+rm -v ${OUTPUT_FOLDER}"/result.model.t7"
 
 if [ -d $OUTPUT_FOLDER ]; then
 	  # Control will enter here if $preprocess_directory doesn't exist.
 	  mv ${OUTPUT_FOLDER} ${EMBEDDINGS}
+fi
 
-date +$'\n'"%R:%D BASH INFO:"$'\t'"COMPLETELY DONE!"  
+date +$'\n'"%R:%D BASH INFO:"$'\t'"COMPLETELY DONE!"
