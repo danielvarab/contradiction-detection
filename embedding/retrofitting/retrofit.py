@@ -114,7 +114,7 @@ def retrofit_v2(words, synonyms, antonyms, iterations):
         for antonym in antonym_neighbours: # antonym cost
             new_vector -= (gamma * new_words[antonym])
 
-        new_words[word] = new_vector/((alpha+beta*len(synonym_neighbours)+gamma*len(synonym_neighbours)))
+        new_words[word] = new_vector/((alpha+beta*len(synonym_neighbours)+gamma*len(antonym_neighbours)))
 
     return new_words
 
