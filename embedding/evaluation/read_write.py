@@ -2,6 +2,7 @@ import sys
 import gzip
 import numpy
 import math
+import re
 
 import numpy as np
 
@@ -93,3 +94,22 @@ def load_toefle(path) :
 			task.append((a[0].strip(), a[1].strip().split(' ') ,a[3].strip()))
 
 	return task
+
+isNumber = re.compile(r'\d+.*')
+def norm_word(word):
+  if isNumber.search(word.lower()):
+    return '---num---'
+  elif re.sub(r'\W+', '', word) == '':
+    return '---punc---'
+  else:
+    return word.lower()
+
+''' Read the PPDB word relations as a dictionary '''
+def read_lexicon(filename, wordVecs=None):
+  lexicon = {}
+  for line in open(filename, 'r'):
+    words = line.lower().strip().split()
+    lexicon[norm_word(words[0])] = [norm_word(word) for word in words[1:]]
+  return lexicon
+
+
