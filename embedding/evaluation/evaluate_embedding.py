@@ -126,7 +126,7 @@ if __name__ == "__main__":
         DEsyn = results.get("DEsyn", skipped)
         DEant = results.get("DEant", skipped)
 
-
+        eprint(">> Writing results...")
         tab_print([ e_file.split("/")[-1], MEN, RG65, WS353, SIMLEX, GREc, GREd, SA, DCsyn, DCant, DEsyn, DEant])
 
         eprint(">> Done evaluating {}\n".format(e_file))

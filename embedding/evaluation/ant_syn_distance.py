@@ -16,9 +16,13 @@ def calculate_mean_distance(lexicon, words, distance_metric='cosine'):
 			if(distance_metric == 'cosine'):
 				distances.append(distance.cosine(words[word],words[lex]))
 			if(distance_metric == 'euclidean'):
-				distances.append(distance.euclidean(words[word],words[lex]))			
+				distances.append(distance.euclidean(words[word],words[lex]))
 
-	return float(np.mean(distances))
+	result = 0
+	if len(distances) > 0:
+		result = float(np.mean(distances))	
+
+	return result
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
