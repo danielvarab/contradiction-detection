@@ -10,8 +10,10 @@ def count_syns_ants(synonyms, antonyms, vocab):
 	max_count = 0
 	min_count = 0
 	if vocab is None:
+		print "vocab is none"
 		vocab = set(synonyms.keys()).intersection(set(antonyms.keys()))
 	else:
+		print "vocab from embedding included"
 		vocab = set(synonyms.keys()).intersection(set(antonyms.keys())).intersection(set(vocab))
 
 	for word in vocab:
