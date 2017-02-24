@@ -15,6 +15,7 @@ def count_syns_ants(synonyms, antonyms, vocab):
 	else:
 		print "vocab from embedding included, with length: " + str(len(vocab))
 		vocab = set(synonyms.keys()).intersection(set(antonyms.keys())).intersection(set(vocab))
+		print "resulting vocab of length: " + str(len(vocab))
 
 	for word in vocab:
 		length = len(synonyms[word])+len(antonyms[word])
