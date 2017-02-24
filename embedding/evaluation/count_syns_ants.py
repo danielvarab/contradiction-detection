@@ -16,15 +16,19 @@ def count_syns_ants(synonyms, antonyms, vocab):
 	else:
 		print "vocab from embedding included, with length: " + str(len(vocab))
 		vocab = set(synonyms.keys()).intersection(set(antonyms.keys())).intersection(set(vocab))
-		new_syns_keys = vocab.intersection(synonyms)
-		synonyms = {k:synonyms[k] for k in new_syns_keys}
-		new_ants_keys = vocab.intersection(antonyms)
-		antonyms = {k:antonyms[k] for k in new_ants_keys}
 		print "resulting vocab of length: " + str(len(vocab))
 
 	for word in vocab:
-		length = len(synonyms[word])+len(antonyms[word])
-		min_length = min(len(synonyms[word]),len(antonyms[word]))
+		syn_length = 0
+		ant_length = 0
+		for s in synonyms[word]:
+			if s in vocab:
+				syn_length += 1
+		for a in antonyms[word]:
+			if s in vocab:
+				ant_length += 1
+		length = syn_length+ant_length
+		min_length = min(syn_length,ant_length)
 		if (length > max_count):
 			max_count = length
 			max_word = word
