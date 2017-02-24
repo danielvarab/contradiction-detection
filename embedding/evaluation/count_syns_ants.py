@@ -40,7 +40,7 @@ if __name__=='__main__':
 	vocab = None
 	if args.e is not None:
 		with Open(args.e,"r") as f:
-    		vocab = [r.split()[0] for r in f]
+			vocab = [r.split()[0] for r in f]
 
 	max_word, max_count, min_word, min_count  = count_syns_ants(synonyms, antonyms, vocab)
 
