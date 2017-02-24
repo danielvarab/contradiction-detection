@@ -24,10 +24,10 @@ GPU_ID=$4
 currentDirectory=`pwd`
 tmp=$(basename "$PATH_TO_EMBEDDING")
 EMBEDDINGS=${tmp%.*}
-OUTPUT_FOLDER=${EMBEDDINGS}
+OUTPUT_FOLDER=${EMBEDDINGS}"-RUNNING"
 
-if [ ! -d "$OUTPUT_FOLDER" ]; then
-	  # Control will enter here if $preprocess_directory doesn't exist.
+if [ ! -d $OUTPUT_FOLDER ]; then
+	  # create output directory
 	  mkdir ${OUTPUT_FOLDER}
 elif [[ -d "$OUTPUT_FOLDER" ]]; then
 		# Found a matching folder name, quitting. 
@@ -108,8 +108,29 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE PREDICTING WITH ${OUTPUT_FOLDER}/result.
 # Confusion Matrix
 date +$'\n'"%R:%D BASH INFO:"$'\t'"BUILDING CONFUSION MATRIX"
 python confusion.py \
---labels ${OUTPUT_FOLDER}/"label-train.txt" \
+--labels ${OUTPUT_FOLDER}/"label-test.txt" \
 --predict ${OUTPUT_FOLDER}"/pred.txt" \
 --outfile ${OUTPUT_FOLDER}"/confusion_matrix.txt"
 
-date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX "
+date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE BUILDING CONFUSION MATRIX"
+
+# Cleaning
+date +$'\n'"%R:%D BASH INFO:"$'\t'"Cleaning up..."
+#snli
+rm -v ${OUTPUT_FOLDER}/"src-train.txt"
+rm -v ${OUTPUT_FOLDER}/"targ-train.txt"
+rm -v ${OUTPUT_FOLDER}/"label-train.txt"
+rm -v ${OUTPUT_FOLDER}/"src-dev.txt"
+rm -v ${OUTPUT_FOLDER}/"targ-dev.txt"
+rm -v ${OUTPUT_FOLDER}/"label-dev.txt"
+
+#train
+rm -v ${OUTPUT_FOLDER}"/entail-train.hdf5"
+rm -v ${OUTPUT_FOLDER}"/result.model.t7"
+
+if [ -d $OUTPUT_FOLDER ]; then
+	  # Control will enter here if $preprocess_directory doesn't exist.
+	  mv ${OUTPUT_FOLDER} ${EMBEDDINGS}
+fi
+
+date +$'\n'"%R:%D BASH INFO:"$'\t'"COMPLETELY DONE!"
