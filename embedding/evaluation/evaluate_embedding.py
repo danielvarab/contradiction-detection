@@ -13,6 +13,7 @@ from word_simularity import eval_all_sim
 from antonym_selection import antonym_selection
 from syntactic_relation import *
 from read_write import *
+from ant_syn_distance import calculate_mean_distance
 
 def rel_path(path):
  return os.path.join(os.path.dirname(__file__), path)
@@ -23,7 +24,7 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 def tab_print(list):
-	print("{:>50} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16}".format(*list))
+	print("{:>50} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16} {:>16}".format(*list))
 
 
 if __name__ == "__main__":
@@ -34,6 +35,8 @@ if __name__ == "__main__":
 	parser.add_argument('--ws', action="store_true", default=False)
 	parser.add_argument('--ss', action="store_true", default=False)
 	parser.add_argument('--sa', action="store_true", default=False)
+	parser.add_argument('--dc', action="store_true", default=None, help="calculate mean cosine distance for antonyms and synonyms")
+	parser.add_argument('--de', action="store_true", default=None, help="calculate mean euclidean distance for antonyms and synonyms")
 
 	args = parser.parse_args(sys.argv[1:])
 
@@ -45,7 +48,7 @@ if __name__ == "__main__":
 	if args.d is not None:
 		embedding_files = [join(args.d, f) for f in listdir(args.d) if isfile(join(args.d, f)) and f.endswith(".txt")]
 
-	tab_print([ "Embedding", "MEN", "RG-65", "WS-353", "SIMLEX", "GRE(cos)", "GRE(dot)", "SA" ])
+	tab_print([ "Embedding", "MEN", "RG-65", "WS-353", "SIMLEX", "GRE(cos)", "GRE(dot)", "SA", "DCsyn", "DCant", "DEsyn", "DEant" ])
 
 	for e_file in embedding_files:
 		eprint("> Loading embedding into memory from {}".format(e_file))
@@ -61,7 +64,7 @@ if __name__ == "__main__":
 			rs = eval_all_sim(embedding, ws_path)
 			results.update(rs)
 		else:
-			print(">> Skipped Word Similarity")
+			eprint(">> Skipped Word Similarity")
 
 		if args.ss:
 			gre_path = rel_path("synonym_selection_tasks/testset950.txt")
@@ -83,16 +86,47 @@ if __name__ == "__main__":
 		else:
 			eprint(">> Skipped Sentiment Analysis")
 
+		if args.dc:
+			syn_path = rel_path("../retrofitting/lexicons/synonym.txt")
+			ant_path = rel_path("../retrofitting/lexicons/antonym.txt")
+			synonyms = read_lexicon(syn_path)
+			antonyms = read_lexicon(ant_path)
+			syn_mean_dist = calculate_mean_distance(synonyms, embedding,'cosine')
+			ant_mean_dist = calculate_mean_distance(antonyms, embedding, 'cosine')
+			results["DCsyn"] = syn_mean_dist
+			results["DCant"] = ant_mean_dist
+
+		else:
+			eprint(">> Skipped Mean Cosine Distance")
+
+		if args.de:
+			syn_path = rel_path("../retrofitting/lexicons/synonym.txt")
+			ant_path = rel_path("../retrofitting/lexicons/antonym.txt")
+			synonyms = read_lexicon(syn_path)
+			antonyms = read_lexicon(ant_path)
+			syn_mean_dist = calculate_mean_distance(synonyms, embedding,'euclidean')
+			ant_mean_dist = calculate_mean_distance(antonyms, embedding, 'euclidean')
+			results["DEsyn"] = syn_mean_dist
+			results["DEant"] = ant_mean_dist
+
+		else:
+			eprint(">> Skipped Mean Euclidean Distance")
+
+
 		skipped = "skipped"
 		MEN = results.get("EN-MEN-TR-3k.txt", skipped)
 		RG65 = results.get("EN-RG-65.txt", skipped)
 		WS353 = results.get("EN-WS-353-ALL.txt", skipped)
         SIMLEX = results.get("EN-SIMLEX-999.txt", skipped)
-		GREc = results.get("GREc", skipped)
-		GREd = results.get("GREd", skipped)
-		SA = results.get("SA", skipped)
+        GREc = results.get("GREc", skipped)
+        GREd = results.get("GREd", skipped)
+        SA = results.get("SA", skipped)
+        DCsyn = results.get("DCsyn", skipped)
+        DCant = results.get("DCant", skipped)
+        DEsyn = results.get("DEsyn", skipped)
+        DEant = results.get("DEant", skipped)
 
 
-		tab_print([ e_file.split("/")[-1], MEN, RG65, WS353, SIMLEX, GREc, GREd, SA])
+        tab_print([ e_file.split("/")[-1], MEN, RG65, WS353, SIMLEX, GREc, GREd, SA, DCsyn, DCant, DEsyn, DEant])
 
-		eprint(">> Done evaluating {}\n".format(e_file))
+        eprint(">> Done evaluating {}\n".format(e_file))
