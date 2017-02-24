@@ -2,13 +2,13 @@ import argparse
 import sys
 import os
 from read_write import read_lexicon
+from operator import itemgetter
 
 
 def count_syns_ants(synonyms, antonyms, vocab):
-	max_word = ""
-	min_word = ""
-	max_count = 0
-	min_count = 0
+	max_words = []
+	min_words = []
+
 	if vocab is None:
 		print "vocab is none"
 		vocab = set(synonyms.keys()).intersection(set(antonyms.keys()))
@@ -27,16 +27,11 @@ def count_syns_ants(synonyms, antonyms, vocab):
 		for a in antonyms[word]:
 			if s in vocab:
 				ant_length += 1
-		length = syn_length+ant_length
-		min_length = min(syn_length,ant_length)
-		if (length > max_count):
-			max_count = length
-			max_word = word
-		if (min_length > min_count):
-			min_count = min_length
-			min_word = word
+		max_words.append((word,syn_length+ant_length))
+		min_words.append((word,min(syn_length,ant_length)))
 
-	return max_word, max_count, min_word, min_count 
+
+	return sorted(max_words, key=itemgetter(1), reverse=True)[1:10], sorted(min_words, key=itemgetter(1), reverse=True)[1:10]
 
 
 if __name__=='__main__':
@@ -54,14 +49,9 @@ if __name__=='__main__':
 		with open(args.e,"r") as f:
 			vocab = [r.split()[0] for r in f]
 
-	max_word, max_count, min_word, min_count  = count_syns_ants(synonyms, antonyms, vocab)
+	max_words, min_words = count_syns_ants(synonyms, antonyms, vocab)
 
-
-	print max_word
-	print max_count
-	print len(synonyms[max_word])
-	print len(antonyms[max_word])
-	print min_word
-	print min_count
-	print len(synonyms[min_word])
-	print len(antonyms[min_word])
+	print "max words"
+	print max_words
+	print "min words"
+	print min_words
