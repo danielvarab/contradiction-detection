@@ -35,15 +35,30 @@ def calculate_average(labels, predictions, index):
 
 
 def compute(sentA, sentB, labels, predictions):
-    columns = ['sentA', 'sentA_l', 'sentB', 'sentB_l', 'label', 'avr_pred']
+    average = []
+    sentA_l = []
+    sentB_l = []
+    assert len(sentA) == len(sentB)
 
-    res = pd.DataFrame(columns=columns)
+    for index, sentenceA in enumerate(sentA):
+        avr = calculate_average(labels, predictions, index)
+        sentA_l.append(len(sentenceA))
+        sentB_l.append(len(sentB[index]))
+        average.append(avr)
 
-    for index, sentA in enumerate(sentA):
-        average = calculate_average(labels, predictions, index)
-        res[index] = [sentA, len(sentA), sentB[index], len(sentB[index]), labels[index], average]
+    df = pd.DataFrame()
+    df['sentA'] = sentA
+    df['sentA_l'] = sentA_l
+    df['sentB'] = sentB
+    df['sentB_l'] = sentB_l
+    df['label'] = labels
+    df['avr_pred'] = average
 
-    return res
+
+
+        #res[index] = [sentA, len(sentA), sentB[index], len(sentB[index]), labels[index], average]
+
+    return df
 
 
 if __name__ == "__main__":
