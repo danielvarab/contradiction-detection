@@ -3,49 +3,48 @@ import fnmatch
 import sys
 import os
 import numpy as np
+import pandas as pd
+from tabulate import tabulate
 
-def getPredictionsFromEmbeddings(path, filename):
+
+# returns a tuple: (embedding_name, list of predictions)
+def getPredictionsFromEmbeddings(path, prediction_file):
     prediction_files = {}
-    for root, subFolders, files in os.walk(path):
-        if filename in files:
+    for root, dirnames, filenames in os.walk(path):
+        for filename in fnmatch.filter(filenames, prediction_file):
             with open(os.path.join(root, filename), 'r') as f:
                 predictions = f.readlines()
-            embedding_name = os.path.dirname(root)
+            embedding_name = os.path.basename(root)
             prediction_files[embedding_name] = predictions
+
     return prediction_files
 
-def calculate_average(labels, predictions, index):
-    result = {}
-    result['embeddings'] = []
-    average = 0
-    number_of_embeddings = len(predictions)
-    for key, value in predictions.iteritems():
-        if(value[index] == labels[index]):
-            average += 1
-            result['embeddings'].append(key)
-    average = average/number_of_embeddings
-    result['average'] = average
 
-    return result
+def calculate_average(labels, predictions, index):
+    average = 0.0
+    number_of_embeddings = len(predictions)
+
+    for key, value in predictions.iteritems():
+        if (value[index] == labels[index]):
+            average += 1
+
+    if (average > 0):
+        average = average / number_of_embeddings
+
+    return average
 
 
 def compute(sentA, sentB, labels, predictions):
-    result = {}
-    for index in enumerate(sentA):
-        result['sentenceA'] = sentA[index]
-        result['sentenceB'] = sentB[index]
-        result['sentenceA_length'] = len(sentA[index])
-        result['sentenceB_length'] = len(sentB[index])
-        result['label'] = labels[index]
-        calc = calculate_average(labels, predictions, index)
-        result['average_prediction'] = calc['average']
-        for key, value in predictions.iteritems():
-            if(key in calc['embeddings']):
-                result[key] = 1
-            else:
-                result[key] = 0
+    columns = ['sentA', 'sentA_l', 'sentB', 'sentB_l', 'label', 'avr_pred']
 
-    return result
+    res = pd.DataFrame(columns=columns)
+
+    for index, sentA in enumerate(sentA):
+        average = calculate_average(labels, predictions, index)
+        res[index] = [sentA, len(sentA), sentB[index], len(sentB[index]), labels[index], average]
+
+    return res
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -68,5 +67,9 @@ if __name__ == "__main__":
         labels = f.readlines()
 
     predictions = getPredictionsFromEmbeddings(args.directory, 'pred.txt')
+    result = compute(sentenceA, sentenceB, labels, predictions)
+    result.to_csv("output.txt", sep='\t')
+    #print tabulate(result, headers='keys', tablefmt='psql')
+    #print(result)
 
     # np.savetxt(args.outfile, confusion, delimiter=",", fmt="%1.0f")
