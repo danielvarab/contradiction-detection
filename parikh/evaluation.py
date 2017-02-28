@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 
 # returns a tuple: (embedding_name, list of predictions)
-def getPredictionsFromEmbeddings(path, prediction_file):
+def readPredictionsFromPredictFile(path, prediction_file):
     prediction_files = {}
     for root, dirnames, filenames in os.walk(path):
         for filename in fnmatch.filter(filenames, prediction_file):
@@ -24,6 +24,7 @@ def calculate_average(labels, predictions, index):
     average = 0.0
     number_of_embeddings = len(predictions)
 
+
     for key, value in predictions.iteritems():
         if (value[index] == labels[index]):
             average += 1
@@ -33,18 +34,27 @@ def calculate_average(labels, predictions, index):
 
     return average
 
+def getPredictions(labels, predictions):
+    result = []
+    for index, label in enumerate(labels):
+        if(label == predictions[index]):
+            result.insert(index, 1)
+        else:
+            result.insert(index, 0)
+
+    return result
 
 def compute(sentA, sentB, labels, predictions):
     average = []
     sentA_l = []
     sentB_l = []
-    assert len(sentA) == len(sentB)
 
     for index, sentenceA in enumerate(sentA):
-        avr = calculate_average(labels, predictions, index)
+        avg = calculate_average(labels, predictions, index)
         sentA_l.append(len(sentenceA))
         sentB_l.append(len(sentB[index]))
-        average.append(avr)
+        average.append(avg)
+
 
     df = pd.DataFrame()
     df['sentA'] = sentA
@@ -54,10 +64,12 @@ def compute(sentA, sentB, labels, predictions):
     df['label'] = labels
     df['avr_pred'] = average
 
+    for key, values in predictions.iteritems():
+        df[key] = getPredictions(labels, values)
 
-
-        #res[index] = [sentA, len(sentA), sentB[index], len(sentB[index]), labels[index], average]
-
+    # display options
+    pd.set_option('display.width', 1000)
+    pd.options.display.max_colwidth = 200
     return df
 
 
@@ -81,7 +93,7 @@ if __name__ == "__main__":
     with open(args.labeltestfile, 'r') as f:
         labels = f.readlines()
 
-    predictions = getPredictionsFromEmbeddings(args.directory, 'pred.txt')
+    predictions = readPredictionsFromPredictFile(args.directory, 'pred.txt')
     result = compute(sentenceA, sentenceB, labels, predictions)
     result.to_csv("output.txt", sep='\t')
     #print tabulate(result, headers='keys', tablefmt='psql')
