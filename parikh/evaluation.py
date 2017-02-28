@@ -4,7 +4,6 @@ import sys
 import os
 import numpy as np
 import pandas as pd
-from tabulate import tabulate
 
 
 # returns a tuple: (embedding_name, list of predictions)
@@ -23,8 +22,6 @@ def readPredictionsFromPredictFile(path, prediction_file):
 def calculate_average(labels, predictions, index):
     average = 0.0
     number_of_embeddings = len(predictions)
-
-
     for key, value in predictions.iteritems():
         if (value[index] == labels[index]):
             average += 1
@@ -33,6 +30,7 @@ def calculate_average(labels, predictions, index):
         average = average / number_of_embeddings
 
     return average
+
 
 def getPredictions(labels, predictions):
     result = []
@@ -51,9 +49,10 @@ def compute(sentA, sentB, labels, labels_avr, predictions):
 
     for index, sentenceA in enumerate(sentA):
         avg = calculate_average(labels, predictions, index)
+        average.append(avg)
         sentA_l.append(len(sentenceA))
         sentB_l.append(len(sentB[index]))
-        average.append(avg)
+
 
 
     df = pd.DataFrame()
@@ -87,19 +86,20 @@ if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
 
     with open(args.srctestfile, 'r') as f:
-        sentenceA = f.readlines()
+        sentenceA = f.read().splitlines()
 
     with open(args.targettestfile, 'r') as f:
-        sentenceB = f.readlines()
+        sentenceB = f.read().splitlines()
 
     with open(args.labeltestfile, 'r') as f:
         labels = f.readlines()
 
     with open(args.label_avr, 'r') as f:
-        labels_avr = f.read().splitlines()
+        labels_avr = map(float, f.read().splitlines())
 
     predictions = readPredictionsFromPredictFile(args.directory, 'pred.txt')
-    result = compute(sentenceA, sentenceB, labels,labels_avr, predictions)
+    print(predictions.keys())
+    result = compute(sentenceA, sentenceB, labels, labels_avr, predictions)
     result.to_csv("output.txt", sep='\t')
     #print tabulate(result, headers='keys', tablefmt='psql')
     #print(result)
