@@ -42,7 +42,7 @@ def getPredictions(labels, predictions):
 
     return result
 
-def compute(sentA, sentB, labels, labels_avr, predictions):
+def compute(sentA, sentB, labels, labels_count, predictions):
     average = []
     sentA_l = []
     sentB_l = []
@@ -61,7 +61,7 @@ def compute(sentA, sentB, labels, labels_avr, predictions):
     df['sentB'] = sentB
     df['sentB_l'] = sentB_l
     df['label'] = labels
-    df['labels_avr'] = labels_avr
+    df['labels_count'] = labels_count
     df['avr_pred'] = average
 
     for key, values in predictions.iteritems():
@@ -95,11 +95,11 @@ if __name__ == "__main__":
         labels = f.readlines()
 
     with open(args.label_avr, 'r') as f:
-        labels_avr = map(float, f.read().splitlines())
+        labels_count = map(float, f.read().splitlines())
 
     predictions = readPredictionsFromPredictFile(args.directory, 'pred.txt')
     print(predictions.keys())
-    result = compute(sentenceA, sentenceB, labels, labels_avr, predictions)
+    result = compute(sentenceA, sentenceB, labels, labels_count, predictions)
     result.to_csv("output.txt", sep='\t')
     #print tabulate(result, headers='keys', tablefmt='psql')
     #print(result)

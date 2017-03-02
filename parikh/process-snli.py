@@ -37,18 +37,16 @@ def main(arguments):
             label5 = d[13].strip()
             tmp = label1 + "," + label2 + "," + label3 + "," + label4 + "," + label5
             list = tmp.split(",")
-            label_avr = 0.0
+            labels_count = 0
             for s in list:
                 if (s == label):
-                    label_avr += 1
-            if (label_avr > 0):
-                label_avr = label_avr / len(list)
+                    labels_count += 1
 
             if label in label_set:
                 src_out.write(premise + "\n")
                 targ_out.write(hypothesis + "\n")
                 label_out.write(label + "\n")
-                label_avr_out.write(str(label_avr) + "\n")
+                label_avr_out.write(str(labels_count) + "\n")
 
         src_out.close()
         targ_out.close()
