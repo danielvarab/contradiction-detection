@@ -148,7 +148,7 @@ if __name__=='__main__':
 		ppdb_outfile = "{}{}{}{}{}".format(file_prefix, "_ppdb.out")
 		ppdb_lex_path = rel_path("lexicons/ppdb-xl.txt")
 		ppdb = read_lexicon(ppdb_lex_path, wordVecs)
-		new_emb = retrofit(wordVecs, ppdb, numIter, args.flip, beta, gamma)
+		new_emb = retrofit(wordVecs, ppdb, numIter)
 		print_word_vecs(new_emb, ppdb_outfile)
 
 	if args.wnsyn:
@@ -162,14 +162,14 @@ if __name__=='__main__':
 		wnall_outfile = "{}{}{}{}{}".format(file_prefix, "_wnall.out")
 		wn_all_lex_path = rel_path("lexicons/wordnet-synonyms+.txt")
 		wnall = read_lexicon(wn_all_lex_path, wordVecs)
-		new_emb = retrofit(wordVecs, wnall, numIter, args.flip, beta, gamma)
+		new_emb = retrofit(wordVecs, wnall, numIter)
 		print_word_vecs(new_emb, wnall_outfile)
 
 	if args.fn:
 		fn_outfile = "{}{}{}{}{}".format(file_prefix, "_fn.out")
 		lexicon_path = rel_path("lexicons/framenet.txt")
 		fn = read_lexicon(lexicon_path, wordVecs)
-		new_emb = retrofit(wordVecs, fn, numIter, args.flip, beta, gamma)
+		new_emb = retrofit(wordVecs, fn, numIter)
 		print_word_vecs(new_emb, fn_outfile)
 
 	if args.a_s_rf:
