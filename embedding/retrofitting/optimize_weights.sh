@@ -36,9 +36,9 @@ declare -a arr=(1 2 5 10 20 50)
 
 # Start retrofitting
 date +$'\n'"%R:%D BASH INFO:"$'\t'"RUNNING RETROFIT TO OPTIMIZE BETA AND GAMMA"
-for i in ${arr[@]}
+for i in "${arr[@]}"
 do
-	for j in ${arr[@]}
+	for j in "${arr[@]}"
 	do
 		echo 'something ' $i $j 
 		python retrofit.py \
