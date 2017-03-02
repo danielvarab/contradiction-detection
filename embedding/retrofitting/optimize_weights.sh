@@ -40,6 +40,7 @@ for i in ${arr[@]}
 do
 	for j in ${arr[@]}
 	do
+		echo 'something ' $i $j 
 		python retrofit.py \
 		--e $PATH_TO_EMBEDDING \
 		--beta $i \
