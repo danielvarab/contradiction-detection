@@ -32,7 +32,7 @@ date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
 date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
 
 # Declare list for grid run
-arr=(1, 2, 5, 10, 20, 50)
+declare -a arr=("1" "2" "5" "10" "20" "50")
 
 # Start retrofitting
 date +$'\n'"%R:%D BASH INFO:"$'\t'"RUNNING RETROFIT TO OPTIMIZE BETA AND GAMMA"
