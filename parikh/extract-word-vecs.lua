@@ -72,7 +72,7 @@ function main()
 	output_file1 = assert(io.open(opt.output_file1,'w'))
 	output_file2 = assert(io.open(opt.output_file2,'w'))
 
-	split = ","
+	split = " "
 
 	for word, idx in pairs(word2idx) do
 		print("writing word: " .. word)
