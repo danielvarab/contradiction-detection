@@ -69,8 +69,8 @@ function main()
 	idx2word = idx2key(opt.word_dict)
 	word2idx = flip_table(idx2word)
 
-	local out_file1 = assert(io.open(opt.output_file1,'w'))
-	local out_file2 = assert(io.open(opt.output_file2,'w'))
+	out_file1 = assert(io.open(opt.output_file1,'w'))
+	out_file2 = assert(io.open(opt.output_file2,'w'))
 
 	split = ","
 
