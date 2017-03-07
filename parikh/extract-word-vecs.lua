@@ -63,24 +63,14 @@ function main()
     	model[i]:evaluate()
 	end
 
-	print("reading emdeddings from model...")
-
 	word_vecs_enc1 = model[1]
   	word_vecs_enc2 = model[2]
-
-  	print("... done!")
-  	print("building idx and word tables...")
 
 	idx2word = idx2key(opt.word_dict)
 	word2idx = flip_table(idx2word)
 
-	print("... done!")
-	print("Opening files for output")
-
-	local out_file1 = io.open(opt.output_file1,'w')
-	local out_file2 = io.open(opt.output_file2,'w')
-
-	print("... done!")
+	local out_file1 = assert(io.open(opt.output_file1,'w'))
+	local out_file2 = assert(io.open(opt.output_file2,'w'))
 
 	split = ","
 
