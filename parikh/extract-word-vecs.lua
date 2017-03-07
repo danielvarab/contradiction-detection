@@ -7,7 +7,7 @@ cmd:text("")
 cmd:text("**Testing**")
 cmd:text("")
 cmd:option('-model_file','result.model_final.t7', [[Path to the final model *.t7 file]])
-cmd:option('-word_dict', '', [[Path to source vocabulary (*.src.dict file)]])
+cmd:option('-word_dict', 'entailment.word.dict', [[Path to source vocabulary (*.src.dict file)]])
 cmd:option('-output_file1', 'word_vecs_1.txt', [[Path to output the first word embedding]])
 cmd:option('-output_file2', 'word_vecs_2.txt', [[Path to output the first word embedding]])
 opt = cmd:parse(arg)
@@ -73,7 +73,7 @@ function main()
 	local out_file2 = io.open(opt.output_file2,'w')
 	split = ","
 
-	for word, idx in word2idx 
+	for word, idx in word2idx do
 		output_file1:write(word, split)
 		output_file2:write(word, split)
 		vec_1 = word_vecs_enc1.weight[idx]
