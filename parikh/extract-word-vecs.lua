@@ -78,14 +78,18 @@ function main()
 		print("writing word: " .. word)
 		output_file1:write(word, split)
 		output_file2:write(word, split)
+		print("word written...")
 		vec_1 = word_vecs_enc1.weight[idx]
 		vec_2 = word_vecs_enc2.weight[idx]
+		print("vectors encoded...")
 		for i = 1, 300 do
 			output_file1:write(vec_1[i], split)
 			output_file2:write(vec_2[i], split)
 		end
+		print("vectors written...")
 		output_file1:write("\n")
 		output_file2:write("\n")
+		print("added new line...")
 	end
 	io.close(output_file1)
 	io.close(output_file2)
