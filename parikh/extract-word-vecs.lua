@@ -84,7 +84,7 @@ function main()
 
 	split = ","
 
-	for word, idx in word2idx do
+	for word, idx in pairs(word2idx) do
 		print("writing word: " .. word)
 		output_file1:write(word, split)
 		output_file2:write(word, split)
