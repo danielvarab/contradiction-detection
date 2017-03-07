@@ -74,6 +74,8 @@ function main()
 	split = ","
 
 	for word, idx in word2idx do
+		print("writing word: ")
+		print(word)
 		output_file1:write(word, split)
 		output_file2:write(word, split)
 		vec_1 = word_vecs_enc1.weight[idx]
