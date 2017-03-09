@@ -33,31 +33,12 @@ function flip_table(u)
    return t   
 end
 
-function sent2wordidx(sent, word2idx, start_symbol)
-   local t = {}
-   local u = {}
-   table.insert(t, START)
-   for word in sent:gmatch'([^%s]+)' do
-	  local idx = word2idx[word] or UNK 
-	  table.insert(t, idx)
-   end
-   return torch.LongTensor(t)
-end
-
-function wordidx2sent(sent, idx2word)
-   local t = {}
-   for i = 1, sent:size(1) do -- skip START and END
-	 table.insert(t, idx2word[sent[i]])	 
-   end
-   return table.concat(t, ' ')
-end
-
 function main()
 	opt = cmd:parse(arg)
 
 	print('loading ' .. opt.model_file .. '...')
 	checkpoint = torch.load(opt.model_file)
-	print('done!')
+	print('... done!')
 	model, model_opt = table.unpack(checkpoint)  
 	for i = 1, #model do
     	model[i]:evaluate()
@@ -74,8 +55,9 @@ function main()
 
 	split = " "
 
+	print('ready to write vectors to glove format in files ' .. opt.output_file1 .. ' and ' .. opt.output_file2 .. '...')
+
 	for word, idx in pairs(word2idx) do
-		print("writing word: " .. word)
 		output_file1:write(word, split)
 		output_file2:write(word, split)
 		vec_1 = word_vecs_enc1.weight[idx]
@@ -89,6 +71,8 @@ function main()
 	end
 	io.close(output_file1)
 	io.close(output_file2)
+
+	print('... done!')
 
 end
 main()
