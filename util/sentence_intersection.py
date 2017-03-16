@@ -108,3 +108,67 @@ df = pd.DataFrame.from_dict(embeddings,  dtype=int)
 
 
 result_dataframe = df_result.join(df)
+
+
+# Number of entailments
+df_result[(df_result['gold_label'] == 'entailment')]
+
+# Number of contradictions
+df_result[(df_result['gold_label'] == 'contradiction')]
+
+# Number of neutrals
+df_result[(df_result['gold_label'] == 'neutral')]
+
+# Number of non-gold_label eg. "-"
+df_result[(df_result['gold_label'] == '-')]
+
+
+# Number of contradictions with antonyms relation
+len((df_result[(df_result['gold_label'] == 'contradiction') & (df_result.astype(str)['ant_pairs'] != '[]') ]))
+
+# Number of entailments with antonyms relation
+len((df_result[(df_result['gold_label'] == 'entailment') & (df_result.astype(str)['ant_pairs'] != '[]') ]))
+
+# Number of neutrals with antonyms relation
+len((df_result[(df_result['gold_label'] == 'neutral') & (df_result.astype(str)['ant_pairs'] != '[]') ]))
+
+# Number of - with antonyms relation
+len((df_result[(df_result['gold_label'] == '-') & (df_result.astype(str)['ant_pairs'] != '[]') ]))
+
+
+# Number of contradictions with synonyms relation
+len((df_result[(df_result['gold_label'] == 'contradiction') & (df_result.astype(str)['syn_pairs'] != '[]') ]))
+
+# Number of entailments with synonyms relation
+len((df_result[(df_result['gold_label'] == 'entailment') & (df_result.astype(str)['syn_pairs'] != '[]') ]))
+
+# Number of neutrals with synonyms relation
+len((df_result[(df_result['gold_label'] == 'neutral') & (df_result.astype(str)['syn_pairs'] != '[]') ]))
+
+# Number of - with synonyms relation
+len((df_result[(df_result['gold_label'] == '-') & (df_result.astype(str)['syn_pairs'] != '[]') ]))
+
+
+
+# INTERSECTION OF SNLI VOCAB & LEXICON
+snli_vocab = []
+ant_vocab = []
+syn_vocab = []
+
+with open('/home/contra/contradiction-detection/parikh/glove.6B.300d.txt_flipFalse_2.0_50.0_anto_rf/entail.word.dict', 'r') as f:
+    for line in f:
+        snli_vocab.append(line.split()[0])
+
+with open('/home/contra/contradiction-detection/datasets/ant_syn/synonym.txt', 'r') as f:
+    for line in f:
+        syn_vocab.append(line.split()[0])
+
+
+with open('/home/contra/contradiction-detection/datasets/ant_syn/antonym.txt', 'r') as f:
+    for line in f:
+        ant_vocab.append(line.split()[0])
+
+
+print(len(set(snli_vocab) & set(ant_vocab)))
+
+print(len(set(snli_vocab) & set(syn_vocab)))
