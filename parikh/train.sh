@@ -19,6 +19,7 @@ PATH_TO_SNLI=$1
 PATH_TO_EMBEDDING=$2
 EMBEDDING_DIMENSION=$3
 GPU_ID=$4
+FIX_EMBEDDINGS=$5
 
 # Variables
 currentDirectory=`pwd`
@@ -46,7 +47,7 @@ exec 1<>${OUTPUT_FOLDER}/${EMBEDDINGS}.log.txt
 # Redirect STDERR to STDOUT
 exec 2>&1
 
-
+echo $@
 date +$'\n'"%R:%D BASH INFO:"$'\t'"USING ${EMBEDDINGS} AS INPUT EMBEDDINGS"
 date +$'\n'"%R:%D BASH INFO:"$'\t'"OUTPUTTING ALL FILES TO ${OUTPUT_FOLDER}"
 
@@ -87,6 +88,7 @@ th train.lua \
 -gpuid $GPU_ID \
 -savefile ${OUTPUT_FOLDER}/result.model \
 -word_vec_size $EMBEDDING_DIMENSION
+--fix_word_vecs $FIX_EMBEDDINGS
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
