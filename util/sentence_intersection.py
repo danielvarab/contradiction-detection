@@ -169,6 +169,15 @@ with open('/home/contra/contradiction-detection/datasets/ant_syn/antonym.txt', '
         ant_vocab.append(line.split()[0])
 
 
-print(len(set(snli_vocab) & set(ant_vocab)))
+#print(len(set(snli_vocab) & set(ant_vocab)))
 
-print(len(set(snli_vocab) & set(syn_vocab)))
+#print(len(set(snli_vocab) & set(syn_vocab)))
+
+
+
+# GET SAMPLE SENTENCES
+# get sentences labelled neutral that have some synonym pairs
+test_sample = df_result[(df_result['gold_label'] == 'neutral') & (df_result.astype(str)['syn_pairs'] != '[]')][['sent1','sent2', 'syn_pairs']].sample(10); test_sample['sent1'].to_csv('sent1_sample.txt', index=False); test_sample['sent2'].to_csv('sent2_sample.txt', index=False); test_sample['syn_pairs'].to_csv('syn_pairs', index=False)
+
+#  get sentences labelled neutral and does not have any synonym or antonym pairs
+test_sample = df_result[(df_result['gold_label'] == 'neutral') & (df_result.astype(str)['syn_pairs'] == '[]') & (df_result.astype(str)['ant_pairs'] == '[]')][['sent1','sent2', 'syn_pairs']].sample(10); test_sample['sent1'].to_csv('sent1_sample.txt', index=False); test_sample['sent2'].to_csv('sent2_sample.txt', index=False); test_sample['syn_pairs'].to_csv('syn_pairs', index=False)
