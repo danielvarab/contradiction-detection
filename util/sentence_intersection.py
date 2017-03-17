@@ -188,3 +188,26 @@ test_sample = df_result[(df_result['gold_label'] == 'neutral') & (df_result.asty
 
 #  get sentences labelled neutral and does not have any synonym or antonym pairs
 test_sample = df_result[(df_result['gold_label'] == 'neutral') & (df_result.astype(str)['syn_pairs'] == '[]') & (df_result.astype(str)['ant_pairs'] == '[]')][['sent1','sent2', 'syn_pairs']].sample(10); test_sample['sent1'].to_csv('sent1_sample.txt', index=False); test_sample['sent2'].to_csv('sent2_sample.txt', index=False); test_sample['syn_pairs'].to_csv('syn_pairs', index=False)
+
+
+# GET INTERSECTIONS
+# Getting all pairs only answered correctly by 'glove.6B.300d_new_anto_rf_out-FIXED'
+test_intercetion = result_dataframe[(result_dataframe['glove.6B.300d']==0) & (result_dataframe['glove.6B.300d_new_anto_rf_out-FIXED']==1)]
+
+# Getting all contradicting pairs, containing antonyms, only answered by 'glove.6B.300d_new_anto_rf_out-FIXED'
+test_intercetion = result_dataframe[(result_dataframe['glove.6B.300d']==0) & (result_dataframe['glove.6B.300d_new_anto_rf_out-FIXED']==1) & (result_dataframe.astype(str)['ant_pairs'] != '[]') & (result_dataframe['gold_label'] == 'contradiction')];
+len(test_intercetion)
+test_intercetion[['sent1','sent2','ant_pairs']]
+
+# More with print to csv
+test_intercetion = result_dataframe[(result_dataframe['glove.840B.300d']==0) & (result_dataframe['glove.840B.300d.txt_new_anto_rf_out']==1)&(result_dataframe.astype(str)['ant_pairs'] != '[]') & (result_dataframe['gold_label'] == 'contradiction')];test_intercetion['sent2'].to_csv('sent2_sample.txt', index=False);test_intercetion['sent1'].to_csv('sent1_sample.txt', index=False); test_intercetion['ant_pairs'].to_csv('ant_pairs.txt', index=False); 
+
+
+
+
+
+
+
+
+
+
