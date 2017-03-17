@@ -162,7 +162,7 @@ snli_vocab = []
 ant_vocab = []
 syn_vocab = []
 
-with open('/home/contra/contradiction-detection/parikh/glove.6B.300d.txt_flipFalse_2.0_50.0_anto_rf/entail.word.dict', 'r') as f:
+with open('/home/contra/contradiction-detection/datasets/parikh-models/glove.6B.300d.txt_flipFalse_2.0_50.0_anto_rf/entail.word.dict', 'r') as f:
     for line in f:
         snli_vocab.append(line.split()[0])
 
