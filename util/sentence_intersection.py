@@ -20,12 +20,10 @@ for l in synonyms:
 
 
 # Generate result data structure
-gold_labels = []
 result = []
 for line in snli:
     d = line.split("\t")
     gold_label = d[0].strip()
-    gold_labels.append(gold_label)
     sent1 = " ".join(d[1].replace("(", "").replace(")", "").strip().split())
     sent2 = " ".join(d[2].replace("(", "").replace(")", "").strip().split())
 
@@ -82,24 +80,24 @@ for line in snli:
 
 
 path = "/home/contra/contradiction-detection/datasets/parikh-models/"
-
+gold_labels = open('/home/contra/contradiction-detection/datasets/parikh-models/glove.840B.300d/label-test.txt', 'r').read().splitlines()
 df = pd.DataFrame()
 embeddings = {}
+acc = 0
 for dirpath, subdirs, files in os.walk(path):
     for file in files:
         if(file == "pred.txt"):
             path = os.path.join(dirpath, file)
             embedding_name = os.path.basename(os.path.dirname(path))
             labels = open(path, 'r').read().splitlines()
-            #print(len(gold_labels))
-            predictions = [0] * len(labels)
+            predictions = [0] * len(gold_labels)
             for index, label in enumerate(labels):
-                #print("LABEL: " + label + " GOLD_LABEL: " + gold_labels[index])
-                #predictions.insert(index, 0)
-                if label == gold_labels[index]:
+                if label.strip() == gold_labels[index]:
                     predictions[index] = 1
+                    acc += 1
 
             embeddings[embedding_name] = predictions
+            acc = acc/len(labels)
 
 
 df = pd.DataFrame.from_dict(embeddings,  dtype=int)
@@ -121,6 +119,15 @@ df_result[(df_result['gold_label'] == 'neutral')]
 
 # Number of non-gold_label eg. "-"
 df_result[(df_result['gold_label'] == '-')]
+
+
+
+list = ['glove.6B.300d', 'glove.840B.300d', 'glove.840B.300d.new_anto_rf_out.not-normalized', 'mce-0.4', 'glove.840B'
+                                                                                                         '.300d+mce']
+# Number of contradictions with antonyms relation
+for embedding in list:
+    l = len((result_dataframe[(result_dataframe['gold_label'] == 'contradiction') & (result_dataframe.astype(str)['ant_pairs'] != '[]') & (result_dataframe[embedding] == 1.0) ]))
+    print("EMBEDDINGNAME " + embedding + " --> " + str(l))
 
 
 # Number of contradictions with antonyms relation
