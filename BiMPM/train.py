@@ -7,12 +7,12 @@ from model import build_model
 import numpy as np
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--validation', required=True, help="snli validation file")
+parser.add_argument('--train', required=True, help="snli train file. JSONL file plz")
 parser.add_argument('--embedding', required=True, help="embedding file")
 
 args = parser.parse_args(sys.argv[1:])
 
-sentences1, sentences2, labels, max_sentence_length = create_dataset(args.validation, args.embedding)
+sentences1, sentences2, labels, max_sentence_length = create_dataset(args.train, args.embedding)
 
 assert len(sentences1) == len(sentences2), " count aren't the same"
 assert len(sentences1) == len(labels), "label count don't match sentence count"
