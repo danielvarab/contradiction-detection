@@ -162,7 +162,7 @@ snli_vocab = []
 ant_vocab = []
 syn_vocab = []
 
-with open('/home/contra/contradiction-detection/parikh/glove.6B.300d.txt_flipFalse_2.0_50.0_anto_rf/entail.word.dict', 'r') as f:
+with open('/home/contra/contradiction-detection/datasets/parikh-models/glove.6B.300d.txt_flipFalse_2.0_50.0_anto_rf/entail.word.dict', 'r') as f:
     for line in f:
         snli_vocab.append(line.split()[0])
 
@@ -201,13 +201,4 @@ test_intercetion[['sent1','sent2','ant_pairs']]
 
 # More with print to csv
 test_intercetion = result_dataframe[(result_dataframe['glove.840B.300d']==0) & (result_dataframe['glove.840B.300d.txt_new_anto_rf_out']==1)&(result_dataframe.astype(str)['ant_pairs'] != '[]') & (result_dataframe['gold_label'] == 'contradiction')];test_intercetion['sent2'].to_csv('sent2_sample.txt', index=False);test_intercetion['sent1'].to_csv('sent1_sample.txt', index=False); test_intercetion['ant_pairs'].to_csv('ant_pairs.txt', index=False); 
-
-
-
-
-
-
-
-
-
 
