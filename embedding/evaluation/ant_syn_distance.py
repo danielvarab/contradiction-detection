@@ -4,9 +4,10 @@ import os
 import argparse
 
 from scipy.spatial import distance
+from scipy.stats import describe, normaltest, mannwhitneyu
 import read_write 
 
-def calculate_mean_distance(lexicon, words, distance_metric='cosine'):
+def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 	vocab = set(words.keys())
 	distances = []
 
@@ -18,11 +19,13 @@ def calculate_mean_distance(lexicon, words, distance_metric='cosine'):
 			if(distance_metric == 'euclidean'):
 				distances.append(distance.euclidean(words[word],words[lex]))
 
-	result = 0
-	if len(distances) > 0:
-		result = float(np.mean(distances))	
+	desc = describe(distances)
+	norm = normaltest(distances)
 
-	return result
+	return desc.mean, norm.pvalue, distances
+
+def calculate_lex_significance(lexicon1, lexicon2):
+	return mannwhitneyu(lexicon1, lexicon2).pvalue
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
@@ -37,20 +40,21 @@ if __name__=='__main__':
 	synonyms = read_write.read_lexicon(args.s)
 	antonyms = read_write.read_lexicon(args.a)
 
-	syn_mean_dist = 0
-	ant_mean_dist = 0
-
 	if(args.d is not None):
-		syn_mean_dist = calculate_mean_distance(synonyms, wordVecs, args.d)
-		ant_mean_dist = calculate_mean_distance(antonyms, wordVecs, args.d)
+		syn_mean_dist, syn_norm, syns = calculate_lex_distance(synonyms, wordVecs, args.d)
+		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms, wordVecs, args.d)
 	else:
-		syn_mean_dist = calculate_mean_distance(synonyms,wordVecs)
-		ant_mean_dist = calculate_mean_distance(antonyms,wordVecs)
+		syn_mean_dist, syn_norm, syns = calculate_lex_distance(synonyms,wordVecs)
+		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms,wordVecs)
 
+	significance = calculate_lex_significance(syns, ants)
 
 	print('>> Distances in ' + args.e)
 	print('>> Synonym mean distance: ' + str(syn_mean_dist))
 	print('>> Antonym mean distance: ' + str(ant_mean_dist))
+	print('>> Synonym norm p-value: ' + str(syn_norm))
+	print('>> Antonym norm p-value: ' + str(ant_norm))
+	print('>> Distance sets significance: ' + str(significance))
 
 
 
