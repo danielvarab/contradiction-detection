@@ -2,6 +2,8 @@ import numpy as np
 import sys
 import os
 import argparse
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from scipy.spatial import distance
 from scipy.stats import describe, normaltest, mannwhitneyu
@@ -27,6 +29,13 @@ def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 def calculate_lex_significance(lexicon1, lexicon2):
 	return mannwhitneyu(lexicon1, lexicon2).pvalue
 
+def plot_distance_distribution(lexicon1, lexicon2, label1, label2, title):
+	sns.distplot(lexicon1, label=label1)
+	sns.distplot(lexicon2, label=label2)
+	plt.title(str(title))
+	plt.legend()
+	plt.show()
+
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--e', required=True, help="embedding file")
@@ -46,8 +55,12 @@ if __name__=='__main__':
 	else:
 		syn_mean_dist, syn_norm, syns = calculate_lex_distance(synonyms,wordVecs)
 		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms,wordVecs)
+	print("Calculated distances...")
 
 	significance = calculate_lex_significance(syns, ants)
+	print("Calculated significance...")
+
+	plot_distance_distribution(syns, ants, "synonyms", "antonyms", os.path.basename(str(args.e)))
 
 	print('>> Distances in ' + args.e)
 	print('>> Synonym mean distance: ' + str(syn_mean_dist))
