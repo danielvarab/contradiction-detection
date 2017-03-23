@@ -47,8 +47,9 @@ def cosine_distance(x, y):
     return -K.mean(x * y, axis=-1, keepdims=True)
 
 class VanillaCosine(Layer):
-    def __init__(self, output_dim=1, **kwargs):
+    def __init__(self, output_dim=1, strategy="full_match", **kwargs):
         self.output_dim = output_dim
+        self.strategy = strategy
         super(VanillaCosine, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -59,12 +60,22 @@ class VanillaCosine(Layer):
         assert type(x) is list, "tensor is not a list"
         p, q = x # p, q :: (batch, sentence_length, 100)
 
-        word_distances = []
-        for word_index in range(self.sentence_length):
-            di = cosine_distance(p[:,word_index,:], q[:,-1,:]) # (32, 1)
-            word_distances.append(di)
-        result = K.stack(word_distances) # (10, 32, 1) => actually want (32,1,10), this is done below
-        return tf.transpose(result,(1,2,0))
+        if self.strategy == "full_match":
+            word_distances = []
+            for word_index in range(self.sentence_length):
+                di = cosine_distance(p[:,word_index,:], q[:,-1,:]) # (32, 1)
+                word_distances.append(di)
+            result = K.stack(word_distances) # (10, 32, 1) => actually want (32,1,10), this is done below
+            return tf.transpose(result,(1,2,0))
+
+        if self.strategy == "2nd": # much more, we need to compare every i with j
+            word_distances = []
+            for word_index in range(self.sentence_length):
+                di = cosine_distance(p[:,word_index,:], q[:,word_index,:]) # (32, 10)
+                word_distances.append(di)
+            result = K.stack(word_distances) # (10, 32, 10) => actually want (32,10,10), this is done below
+            transposed = tf.transpose(result,(1,2,0))
+            return K.max(transposed, axis=1, keepdims=True)
 
 
     def get_output_shape_for(self, input_shape):
@@ -72,14 +83,13 @@ class VanillaCosine(Layer):
         return (shape1[0], self.output_dim, shape1[1])
 
 # sentence and words are capped at length 10 here, 15 is the word length
-def build_model(sentence_length, word_length):
+def build_model(char_vocab_size, sentence_length, word_length):
     word_a_input = Input(shape=(sentence_length, 300), name="word_sentence_A")
     word_b_input = Input(shape=(sentence_length, 300), name="word_sentence_B")
-    char_a_input = Input(shape=(sentence_length, 15), name="char_sentence_A")
-    char_b_input = Input(shape=(sentence_length, 15), name="char_sentence_B")
+    char_a_input = Input(shape=(sentence_length, word_length), name="char_sentence_A")
+    char_b_input = Input(shape=(sentence_length, word_length), name="char_sentence_B")
 
-    # 27 is the vocab size, 20 is the embedding dimensionality, input length is straight forward the length of chars
-    char_embedding = TimeDistributed(Embedding(27, 20, input_length=word_length))
+    char_embedding = TimeDistributed(Embedding(char_vocab_size, 20, input_length=word_length))
 
     char_a_embs = char_embedding(char_a_input)
     char_b_embs = char_embedding(char_b_input)
