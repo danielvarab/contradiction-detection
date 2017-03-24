@@ -102,18 +102,18 @@ def build_model(char_vocab_size, sentence_length, word_length):
     sentence_a_emb = merge([word_a_input, char_sentence_a], mode='concat', name="sentence_a_emb")
     sentence_b_emb = merge([word_b_input, char_sentence_b], mode='concat', name="sentence_b_emb")
 
-    fw_a_ctx, bw_a_ctx = Bidirectional(LSTM(100, return_sequences=True), merge_mode=None)(sentence_a_emb)
-    fw_b_ctx, bw_b_ctx = Bidirectional(LSTM(100, return_sequences=True), merge_mode=None)(sentence_b_emb)
+    fw_a_ctx, bw_a_ctx = Bidirectional(LSTM(100, dropout=0.1, return_sequences=True), merge_mode=None)(sentence_a_emb)
+    fw_b_ctx, bw_b_ctx = Bidirectional(LSTM(100, dropout=0.1, return_sequences=True), merge_mode=None)(sentence_b_emb)
 
     forward_matchings = VanillaCosine()([fw_a_ctx, fw_b_ctx])
     backward_matchings = VanillaCosine()([bw_a_ctx, bw_b_ctx])
 
-    forward_matching_aggregation = Bidirectional(LSTM(100), merge_mode="concat")(forward_matchings)
-    backward_matching_aggregation = Bidirectional(LSTM(100), merge_mode="concat")(backward_matchings)
+    forward_matching_aggregation = Bidirectional(LSTM(100, dropout=0.1), merge_mode="concat")(forward_matchings)
+    backward_matching_aggregation = Bidirectional(LSTM(100, dropout=0.1), merge_mode="concat")(backward_matchings)
 
     matching_vector = merge([forward_matching_aggregation, backward_matching_aggregation], mode='concat')
 
-    prediction_layer = Dense(3, activation='sigmoid')(matching_vector)
+    prediction_layer = Dense(3, dropout=0.1, activation='softmax')(matching_vector)
 
     model = Model(input=[word_a_input, char_a_input, word_b_input, char_b_input], output=prediction_layer)
 

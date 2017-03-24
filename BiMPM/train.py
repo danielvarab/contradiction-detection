@@ -27,7 +27,7 @@ assert len(sentences1) == len(labels), "label count don't match sentence count"
 # K.tf.device("/gpu:1"):
 embedding_size = len(char_vocab)+1 # plus for because we need to consider zero 0
 model = build_model(embedding_size, max_sentence_length, max_word_length)
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 print(model.summary())
 
 
