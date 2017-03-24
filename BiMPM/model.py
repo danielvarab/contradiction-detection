@@ -113,7 +113,7 @@ def build_model(char_vocab_size, sentence_length, word_length):
 
     matching_vector = merge([forward_matching_aggregation, backward_matching_aggregation], mode='concat')
 
-    prediction_layer = Dense(1, activation='sigmoid')(matching_vector)
+    prediction_layer = Dense(3, activation='sigmoid')(matching_vector)
 
     model = Model(input=[word_a_input, char_a_input, word_b_input, char_b_input], output=prediction_layer)
 
