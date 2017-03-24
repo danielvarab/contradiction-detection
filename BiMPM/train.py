@@ -24,6 +24,7 @@ sentences1, sentence1_c, sentences2, sentence2_c, labels  = training_data
 assert len(sentences1) == len(sentences2), "sentence count aren't the same"
 assert len(sentences1) == len(labels), "label count don't match sentence count"
 
+# K.tf.device("/gpu:1"):
 embedding_size = len(char_vocab)+1 # plus for because we need to consider zero 0
 model = build_model(embedding_size, max_sentence_length, max_word_length)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -38,5 +39,4 @@ sentence_input = {
     "char_sentence_B": sentence2_c,
 }
 
-labels = np.random.randint(2, size=sample_count)
 model.fit(sentence_input, labels, nb_epoch=10, batch_size=32)
