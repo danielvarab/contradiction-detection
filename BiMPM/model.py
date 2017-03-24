@@ -118,3 +118,37 @@ def build_model(char_vocab_size, sentence_length, word_length):
     model = Model(input=[word_a_input, char_a_input, word_b_input, char_b_input], output=prediction_layer)
 
     return model
+
+def build_model_2(char_vocab_size, sentence_length, word_length):
+    word_a_input = Input(shape=(sentence_length, 300), name="word_sentence_A")
+    word_b_input = Input(shape=(sentence_length, 300), name="word_sentence_B")
+    char_a_input = Input(shape=(sentence_length, word_length), name="char_sentence_A")
+    char_b_input = Input(shape=(sentence_length, word_length), name="char_sentence_B")
+
+    char_embedding = TimeDistributed(Embedding(char_vocab_size, 20, input_length=word_length))
+
+    char_a_embs = char_embedding(char_a_input)
+    char_b_embs = char_embedding(char_b_input)
+
+    char_lstm = TimeDistributed(LSTM(50))
+
+    char_sentence_a = char_lstm(char_a_embs)
+    char_sentence_b = char_lstm(char_b_embs)
+
+    sentence_a_emb = merge([word_a_input, char_sentence_a], mode='concat', name="sentence_a_emb")
+    sentence_b_emb = merge([word_b_input, char_sentence_b], mode='concat', name="sentence_b_emb")
+
+    fw_a_ctx = LSTM(100, return_sequences=True)(sentence_a_emb)
+    fw_b_ctx = LSTM(100, return_sequences=True)(sentence_b_emb)
+
+
+    forward_a_aggregation = LSTM(100)(fw_a_ctx)
+    forward_b_aggregation = LSTM(100)(fw_b_ctx)
+
+    matching_vector = merge([forward_a_aggregation, forward_b_aggregation], mode='concat')
+
+    prediction_layer = Dense(3, activation='softmax')(matching_vector)
+
+    model = Model(input=[word_a_input, char_a_input, word_b_input, char_b_input], output=prediction_layer)
+
+    return model

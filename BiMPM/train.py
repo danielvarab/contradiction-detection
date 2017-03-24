@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from preprocessing import *
-from model import build_model
+from model import *
 
 import numpy as np
 
@@ -26,7 +26,7 @@ assert len(sentences1) == len(labels), "label count don't match sentence count"
 
 # K.tf.device("/gpu:1"):
 embedding_size = len(char_vocab)+1 # plus for because we need to consider zero 0
-model = build_model(embedding_size, max_sentence_length, max_word_length)
+model = build_model_2(embedding_size, max_sentence_length, max_word_length)
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 print(model.summary())
 
@@ -40,3 +40,4 @@ sentence_input = {
 }
 
 model.fit(sentence_input, labels, nb_epoch=10, batch_size=32)
+global_scores = model.evaluate(sentence_input, labels, verbose=0)
