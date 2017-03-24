@@ -2,8 +2,10 @@ import numpy as np
 import sys
 import os
 import argparse
-import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from scipy.spatial import distance
 from scipy.stats import describe, normaltest, mannwhitneyu
@@ -34,7 +36,8 @@ def plot_distance_distribution(lexicon1, lexicon2, label1, label2, title):
 	sns.distplot(lexicon2, label=label2)
 	plt.title(str(title))
 	plt.legend()
-	plt.show()
+	#plt.show()
+	plt.savefig("figures/ant_syn_distribution_" + title, format='png')
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
@@ -60,7 +63,7 @@ if __name__=='__main__':
 	significance = calculate_lex_significance(syns, ants)
 	print("Calculated significance...")
 
-	plot_distance_distribution(syns, ants, "synonyms", "antonyms", os.path.basename(str(args.e)))
+	plot_distance_distribution(syns, ants, "synonyms", "antonyms", os.path.splitext(os.path.basename(args.e))[0])
 
 	print('>> Distances in ' + args.e)
 	print('>> Synonym mean distance: ' + str(syn_mean_dist))
