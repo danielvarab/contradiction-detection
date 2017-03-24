@@ -141,11 +141,13 @@ def build_model_2(char_vocab_size, sentence_length, word_length):
     fw_a_ctx = LSTM(100, return_sequences=True)(sentence_a_emb)
     fw_b_ctx = LSTM(100, return_sequences=True)(sentence_b_emb)
 
+    p_to_q_matchings = VanillaCosine()([fw_a_ctx, fw_b_ctx]) # notice this should be x 4 and them merged
+    q_to_p_matchings = VanillaCosine()([fw_b_ctx, fw_a_ctx]) # as the current shape is (1,10) should be (4, 10) . and with perspective (80,10)
 
-    forward_a_aggregation = LSTM(100)(fw_a_ctx)
-    forward_b_aggregation = LSTM(100)(fw_b_ctx)
+    p_to_q_fw_bw_aggr = Bidirectional(LSTM(100), merge_mode="concat")(p_to_q_matchings)
+    q_to_p_fw_bw_aggr = Bidirectional(LSTM(100), merge_mode="concat")(q_to_p_matchings)
 
-    matching_vector = merge([forward_a_aggregation, forward_b_aggregation], mode='concat')
+    matching_vector = merge([p_to_q_fw_bw_aggr, q_to_p_fw_bw_aggr], mode='concat')
 
     prediction_layer = Dense(3, activation='softmax')(matching_vector)
 
