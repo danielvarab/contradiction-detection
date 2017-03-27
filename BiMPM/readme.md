@@ -2,7 +2,7 @@
 
 - [x] Rewrite training as generator
   - [x] Test implementation
-- [ ] Implement callback for test evaluation on test set
+- [x] Implement callback for test evaluation on test set
 - [ ] Run implementation
 - [ ] Implement other matches
   - [ ] MaxPool

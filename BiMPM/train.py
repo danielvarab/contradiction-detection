@@ -52,7 +52,7 @@ test_sentence_input = {
 test_labels = test_labels[:subset]
 
 sample_generator = create_dataset_generator(embedding, encoder, max_sentence_length, max_word_length, batch_size=32)
-model.fit_generator(sample_generator, samples_per_epoch=sample_count, nb_epoch=10, validation_data=(test_sentence_input, test_labels), verbose=2)
+model.fit_generator(sample_generator, samples_per_epoch=sample_count, nb_epoch=10, validation_data=(test_sentence_input, test_labels))
 model.save('BiMPM.h5')
 # model.fit(sentence_input, labels, nb_epoch=10, batch_size=32)
 global_scores = model.evaluate(sentence_input, labels, verbose=0)
