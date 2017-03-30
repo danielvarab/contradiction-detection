@@ -33,14 +33,15 @@ def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 def calculate_lex_significance(lexicon1, lexicon2):
 	return mannwhitneyu(lexicon1, lexicon2).pvalue
 
-def plot_distance_distribution(lexicon1, lexicon2, control, label1, label2, conLabel, title):
+def plot_distance_distribution(lexicon1, lexicon2, control, label1, label2, conLabel, title, distance):
 	sns.distplot(lexicon1, label=label1)
 	sns.distplot(lexicon2, label=label2)
 	sns.distplot(control, label=conLabel)
 	plt.title(str(title))
 	plt.legend()
+	plt.xlabel(distance)
 	#plt.show()
-	plt.savefig("figures/ant_syn_distribution_" + title, format='png')
+	plt.savefig("figures/ant_syn_distribution_" + title + "_" + distance + ".png", format='png')
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
@@ -64,7 +65,6 @@ if __name__=='__main__':
 	print("Calculated distances...")
 
 	control = sample(wordVecs.values(),int(math.sqrt(len(ants)))*2)
-	print(len(control))
 	control_dist = []
 	for v in control[0:len(control)/2]:
 		for u in control[len(control)/2:]:
@@ -76,7 +76,7 @@ if __name__=='__main__':
 	significance = calculate_lex_significance(syns, ants)
 	print("Calculated significance...")
 
-	plot_distance_distribution(syns, ants, control_dist, "synonyms", "antonyms", "control", os.path.splitext(os.path.basename(args.e))[0] + "_" + args.d)
+	plot_distance_distribution(syns, ants, control_dist, "synonyms", "antonyms", "control", os.path.splitext(os.path.basename(args.e))[0], args.d)
 
 	print('>> Distances in ' + args.e)
 	print('>> Synonym mean distance: ' + str(syn_mean_dist))
