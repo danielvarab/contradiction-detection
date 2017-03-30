@@ -6,9 +6,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+import math
 
 from scipy.spatial import distance
 from scipy.stats import describe, normaltest, mannwhitneyu
+from random import sample
 import read_write 
 
 def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
@@ -31,9 +33,10 @@ def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 def calculate_lex_significance(lexicon1, lexicon2):
 	return mannwhitneyu(lexicon1, lexicon2).pvalue
 
-def plot_distance_distribution(lexicon1, lexicon2, label1, label2, title):
+def plot_distance_distribution(lexicon1, lexicon2, control, label1, label2, conLabel, title):
 	sns.distplot(lexicon1, label=label1)
 	sns.distplot(lexicon2, label=label2)
+	sns.distplot(control, label=conLabel)
 	plt.title(str(title))
 	plt.legend()
 	#plt.show()
@@ -60,10 +63,20 @@ if __name__=='__main__':
 		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms,wordVecs)
 	print("Calculated distances...")
 
+	control = sample(wordVecs.values(),int(math.sqrt(len(ants)))*2)
+	print(len(control))
+	control_dist = []
+	for v in control[0:len(control)/2]:
+		for u in control[len(control)/2:]:
+			if(args.d is not 'cosine'):
+				control_dist.append(distance.cosine(v,u))
+			else:
+				control_dist.append(distance.euclidean(v,u))
+
 	significance = calculate_lex_significance(syns, ants)
 	print("Calculated significance...")
 
-	plot_distance_distribution(syns, ants, "synonyms", "antonyms", os.path.splitext(os.path.basename(args.e))[0])
+	plot_distance_distribution(syns, ants, control_dist, "synonyms", "antonyms", "control", os.path.splitext(os.path.basename(args.e))[0] + "_" + args.d)
 
 	print('>> Distances in ' + args.e)
 	print('>> Synonym mean distance: ' + str(syn_mean_dist))
