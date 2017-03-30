@@ -270,6 +270,3 @@ def create_dataset_generator(embedding, encoder, max_sentence_length, max_word_l
         sentences1_f.close()
         sentences2_f.close()
         labels_f.close()
-
-
-# model.fit_generator(generate_arrays_from_file('/my_file.txt'), samples_per_epoch=10000, nb_epoch=10)
