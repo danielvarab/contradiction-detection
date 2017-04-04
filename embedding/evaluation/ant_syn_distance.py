@@ -25,10 +25,13 @@ def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 			if(distance_metric == 'euclidean'):
 				distances.append(distance.euclidean(words[word],words[lex]))
 
-	desc = describe(distances)
+	if(distances is not []):
+		mean = describe(distances).mean
+	else:
+		mean = None
 	norm = normaltest(distances)
 
-	return desc.mean, norm.pvalue, distances
+	return mean, norm.pvalue, distances
 
 def calculate_lex_significance(lexicon1, lexicon2):
 	return mannwhitneyu(lexicon1, lexicon2).pvalue
