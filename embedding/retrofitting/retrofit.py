@@ -20,14 +20,17 @@ def norm_word(word):
 		return word.lower()
 
 ''' Read all the word vectors and normalize them '''
-def read_word_vecs(filename, normalize):
+def read_word_vecs(filename, normalize, toLower=False):
 	wordVectors = {}
 	if filename.endswith('.gz'): fileObject = gzip.open(filename, 'r')
 	else: fileObject = open(filename, 'r')
 
 	for line in fileObject:
 		if line[0].isupper(): continue;
-		line = line.strip().lower() # NOTE: Daniel: this reduces the word embedding
+		if(toLower):
+			line = line.strip().lower() # NOTE: Daniel: this reduces the word embedding
+		else:
+			line = line.strip()
 		word = line.split()[0]
 		vector = numpy.zeros(len(line.split())-1, dtype=float)
 		for index, vecVal in enumerate(line.split()[1:]):
@@ -125,6 +128,7 @@ if __name__=='__main__':
 	parser.add_argument('--beta', default=1.0, help="value of weight beta as float")
 	parser.add_argument('--gamma', default=1.0, help="value of weight gamma as float")
 	parser.add_argument('--normalize', action="store_true", default=False, help="normalize embedding. defaults to False")
+	parser.add_argument('--toLower', action="store_true", default=False, help="toLower embedding vocab. defaults to False")
 	parser.add_argument('--flip', action="store_true", default=False, help="If fitting moves away from original, try flipped vector")
 	parser.add_argument('--ppdb', action="store_true", default=False, help="retrofit with ppdb")
 	parser.add_argument('--wnsyn', action="store_true", default=False, help="retrofit with word net synonyms")
@@ -135,7 +139,7 @@ if __name__=='__main__':
 	args = parser.parse_args(sys.argv[1:])
 
 	name = os.path.basename(args.e)
-	wordVecs = read_word_vecs(args.e, args.normalize)
+	wordVecs = read_word_vecs(args.e, args.normalize, args.toLower)
 
 	beta = float(args.beta)
 	gamma = float(args.gamma)
