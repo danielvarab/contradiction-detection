@@ -44,7 +44,11 @@ def plot_distance_distribution(lexicon1, lexicon2, control, label1, label2, conL
 	plt.legend()
 	plt.xlabel(distance)
 	#plt.show()
+<<<<<<< 94ed0a342abae3b5e782cf3e40eb3781133a1cfa
 	plt.savefig("figures/ant_syn_distribution_" + title + "_" + distance + ".png", format='png')
+=======
+	plt.savefig("figures/ant_syn_distribution_" + title + ".png", format='png')
+>>>>>>> minor stuff...
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
