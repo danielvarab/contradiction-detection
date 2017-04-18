@@ -88,36 +88,36 @@ def retrofit(wordVecs, lexicon, numIters):
 
 
 def retrofit_v2(words, synonyms, antonyms, iterations, flip, beta, gamma):
-		new_words = deepcopy(words)
-		vocab = set(words.keys())
+	new_words = deepcopy(words)
+	vocab = set(words.keys())
 
-		for i in range(iterations):
-			for word in vocab:
-				synonym_neighbours = set(synonyms.get(word, [])).intersection(vocab)
-				antonym_neighbours = set(antonyms.get(word, [])).intersection(vocab)
+	for i in range(iterations):
+		for word in vocab:
+			synonym_neighbours = set(synonyms.get(word, [])).intersection(vocab)
+			antonym_neighbours = set(antonyms.get(word, [])).intersection(vocab)
 
-				alpha = len(synonym_neighbours)+len(antonym_neighbours)
-				if alpha is 0: alpha = 1
+			alpha = len(synonym_neighbours)+len(antonym_neighbours)
+			if alpha is 0: alpha = 1
 
-				orig_vector = words[word]
-				last_vector = new_words[word]
-				if (flip):
-					v_sum = last_vector + orig_vector
-					v_diff = last_vector - orig_vector
-					if (np.sqrt(v_diff.dot(v_diff))>np.sqrt(v_sum.dot(v_sum))):
-						orig_vector = -orig_vector
+			orig_vector = words[word]
+			last_vector = new_words[word]
+			if (flip):
+				v_sum = last_vector + orig_vector
+				v_diff = last_vector - orig_vector
+				if (np.sqrt(v_diff.dot(v_diff))>np.sqrt(v_sum.dot(v_sum))):
+					orig_vector = -orig_vector
 
-				new_vector = alpha * orig_vector # origin cost
+			new_vector = alpha * orig_vector # origin cost
 
-				for synonym in synonym_neighbours: # synonym cost
-						new_vector += (beta * new_words[synonym])
+			for synonym in synonym_neighbours: # synonym cost
+					new_vector += (beta * new_words[synonym])
 
-				for antonym in antonym_neighbours: # antonym cost
-						new_vector -= (gamma * new_words[antonym])
+			for antonym in antonym_neighbours: # antonym cost
+					new_vector -= (gamma * new_words[antonym])
 
-				new_words[word] = new_vector/((alpha+beta*len(synonym_neighbours)+gamma*len(antonym_neighbours)))
+			new_words[word] = new_vector/((alpha+beta*len(synonym_neighbours)+gamma*len(antonym_neighbours)))
 
-		return new_words
+	return new_words
 
 def rel_path(path):
 	return os.path.join(os.path.dirname(__file__), path)
