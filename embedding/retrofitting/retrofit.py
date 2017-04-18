@@ -6,6 +6,7 @@ import re
 import sys
 import os
 
+from six import iteritems
 from copy import deepcopy
 from scipy.spatial import distance
 import numpy as np
@@ -26,7 +27,7 @@ def read_word_vecs(filename, normalize, toLower=False):
 	else: fileObject = open(filename, 'r')
 
 	for line in fileObject:
-		if line[0].isupper(): continue;
+		# if line[0].isupper(): continue;
 		if(toLower):
 			line = line.strip().lower() # NOTE: Daniel: this reduces the word embedding
 		else:
@@ -50,7 +51,7 @@ def read_word_vecs(filename, normalize, toLower=False):
 def print_word_vecs(wordVectors, outFileName):
 	sys.stderr.write('\nWriting down the vectors in '+outFileName+'\n')
 	outFile = open(outFileName, 'w')
-	for word, values in wordVectors.iteritems():
+	for word, values in iteritems(wordVectors):
 		outFile.write(word+' ')
 		for val in wordVectors[word]:
 			outFile.write('%.4f' %(val)+' ')
