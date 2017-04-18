@@ -5,84 +5,6 @@ from keras import backend as K
 import tensorflow as tf
 from matching import *
 
-class MPL(Layer):
-    def __init__(self, output_dim, **kwargs):
-        self.output_dim = output_dim
-        super(MPL, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        p_input_shape = input_shape[0]
-        self.batch_size = p_input_shape[2]
-        self.W = self.add_weight(shape=(self.output_dim, p_input_shape[2]),
-                                 initializer='uniform',
-                                 trainable=True)
-        self.built = True
-
-    def call(self, x, mask=None):
-        assert type(x) is list, "tensor is not a list"
-        p = x[0] # shape (batch, sequence, d) .. (32, 10, 350)
-        q = x[1] # shape (batch, sequence, d) .. (32, 10, 350)
-
-        batch_distances = []
-        for i in range(32):
-            m = []
-            for k in range(self.output_dim):
-                # to implememnt the max match, https://github.com/fchollet/keras/blob/master/keras/backend/tensorflow_backend.py#L978
-                weighted_p = p[i,:,:] * self.W[k]
-                weighted_q = q[i,-1,:] * self.W[k] # full match
-                bi_k_distances = cos_distance(weighted_q, weighted_p)
-                m.append(bi_k_distances)
-            m = K.concatenate(m)
-            batch_distances.append(m)
-
-        concatted = K.concatenate(batch_distances)
-        return K.reshape(concatted, (32, 10, self.output_dim))
-
-    def get_output_shape_for(self, input_shape):
-        shape1, shape2 = input_shape # (l, d) where d is the sentence/sequence length
-        return (shape1[0], shape2[1], self.output_dim)
-
-def cosine_distance(x, y):
-    x = K.l2_normalize(x, axis=-1)
-    y = K.l2_normalize(y, axis=-1)
-    return -K.mean(x * y, axis=-1, keepdims=True)
-
-class VanillaCosine(Layer):
-    def __init__(self, output_dim=1, strategy="full_match", **kwargs):
-        self.output_dim = output_dim
-        self.strategy = strategy
-        super(VanillaCosine, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        self.sentence_length = input_shape[0][1]
-        self.built = True
-
-    def call(self, x, mask=None):
-        assert type(x) is list, "tensor is not a list"
-        p, q = x # p, q :: (batch, sentence_length, 100)
-
-        if self.strategy == "full_match":
-            word_distances = []
-            for word_index in range(self.sentence_length):
-                di = cosine_distance(p[:,word_index,:], q[:,-1,:]) # (32, 1)
-                word_distances.append(di)
-            result = K.stack(word_distances) # (10, 32, 1) => actually want (32,1,10), this is done below
-            return tf.transpose(result,(1,2,0))
-
-        if self.strategy == "2nd": # much more, we need to compare every i with j
-            word_distances = []
-            for word_index in range(self.sentence_length):
-                di = cosine_distance(p[:,word_index,:], q[:,word_index,:]) # (32, 10)
-                word_distances.append(di)
-            result = K.stack(word_distances) # (10, 32, 10) => actually want (32,10,10), this is done below
-            transposed = tf.transpose(result,(1,2,0))
-            return K.max(transposed, axis=1, keepdims=True)
-
-
-    def get_output_shape_for(self, input_shape):
-        shape1, shape2 = input_shape
-        return (shape1[0], self.output_dim, shape1[1])
-
 # sentence and words are capped at length 10 here, 15 is the word length
 def build_model(char_vocab_size, sentence_length, word_length):
     word_a_input = Input(shape=(sentence_length, 300), name="word_sentence_A")
@@ -172,3 +94,5 @@ def build_model_2(char_vocab_size, sentence_length, word_length):
     model = Model(input=[word_a_input, char_a_input, word_b_input, char_b_input], output=prediction_layer)
 
     return model
+
+def build_model_3

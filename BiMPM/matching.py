@@ -23,7 +23,7 @@ class FullMatch(Layer):
         assert type(x) is list, "tensor is not a list"
         p, q = x # p, q :: (batch, sentence_length, 100)
 
-        word_distances = [cosine_distance(p[:,word_index,:], q[:,-1,:]) for word_index in range(self.sentence_length)]
+        word_distances = [cosine_distance(word, q[:,-1,:]) for word in tf.unstack(p, axis=1)]
         result = K.stack(word_distances)
         return tf.transpose(result,(1,2,0))
 
