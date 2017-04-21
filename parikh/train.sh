@@ -87,8 +87,8 @@ th train.lua \
 -pre_word_vecs ${OUTPUT_FOLDER}"/glove.hdf5" \
 -gpuid $GPU_ID \
 -savefile ${OUTPUT_FOLDER}/result.model \
--word_vec_size $EMBEDDING_DIMENSION
---fix_word_vecs $FIX_EMBEDDINGS
+-word_vec_size $EMBEDDING_DIMENSION \
+-fix_word_vecs $FIX_EMBEDDINGS
 
 date +$'\n'"%R:%D BASH INFO:"$'\t'"DONE TRAINING WITH $OUTPUT_FOLDER"
 
