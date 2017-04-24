@@ -15,15 +15,13 @@ class Align(Layer):
 
     def call(self, x):
         a, b = x
-        a_shape = K.int_shape(a)
-        b_shape = K.int_shape(b)
 
-        # if we normalize, this becomes the cosine similarity
+        # if we normalize, this layer outputs the cosine similarity
         if self.normalize:
             a = K.l2_normalize(a, axis=2)
             b = K.l2_normalize(b, axis=2)
 
-        return K.batch_dot(a, b, axes=[2, 2]) # (32, s2_word_count, 1)
+        return K.batch_dot(a, b, axes=[2, 2])
 
     def compute_output_shape(self, input_shape):
         a_shape, b_shape = input_shape
