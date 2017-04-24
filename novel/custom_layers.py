@@ -20,15 +20,10 @@ class Align(Layer):
 
         # if we normalize, this becomes the cosine similarity
         if self.normalize:
-            s1 = K.l2_normalize(a, axis=2)
-            s2 = K.l2_normalize(b, axis=2)
+            a = K.l2_normalize(a, axis=2)
+            b = K.l2_normalize(b, axis=2)
 
-        tensors = []
-        for i in range(a_shape[1]):
-            b_i = K.expand_dims(b[:,i,:], 1) # (32, 1, 300)
-            distances = K.batch_dot(a, b_i, axes=[2, 2]) # (32, 1, s2_word_count)
-            tensors.append(distances)
-        return K.concatenate(tensors, axis=2)
+        return K.batch_dot(a, b, axes=[2, 2]) # (32, s2_word_count, 1)
 
     def compute_output_shape(self, input_shape):
         a_shape, b_shape = input_shape
