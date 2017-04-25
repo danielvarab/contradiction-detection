@@ -100,18 +100,17 @@ ant_embed = Embedding(VOCAB_SIZE, ANT_WORD_DIM, weights=[ant_embedding_matrix], 
 premise = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_a")
 hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
 
+summer = Lambda(lambda x: K.sum(x, axis=1))
+max_aligner = Lambda(max_both_directions, output_shape=max_both_directions_output_shape)
+
 s1 = embed(premise)
 s2 = embed(hypothesis)
 
 ant_s1 = ant_embed(premise)
 ant_s2 = ant_embed(hypothesis)
 
-summer = Lambda(lambda x: K.sum(x, axis=1))
-max_aligner = Lambda(max_both_directions, output_shape=max_both_directions_output_shape)
+alignment = Align()([s1,s2])
 
-aligner = Align()
-
-alignment = aligner([s1,s2])
 max_alignment = max_aligner(alignment)
 
 tensors = [
