@@ -5,9 +5,10 @@ import argparse
 
 import numpy as np
 
+from keras import backend as K
 from keras.models import Model
 from keras.utils import np_utils
-from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding
+from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, concatenate, Lambda
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.merge import Concatenate, Dot, maximum
 
@@ -23,6 +24,7 @@ parser.add_argument('--train', required=True, help="train file. JSONL file plz")
 parser.add_argument('--dev', required=True, help="dev file. JSONL file plz")
 parser.add_argument('--test', required=True, help="snli test file. JSONL file plz")
 parser.add_argument('--embedding', required=True, help="embedding file")
+parser.add_argument('--ant_embedding', required=True, help="antnonym embedding file")
 
 args = parser.parse_args(sys.argv[1:])
 
@@ -30,6 +32,7 @@ train_file = args.train
 dev_file = args.dev
 test_file = args.test
 emb_file = args.embedding
+ant_emb_file = args.ant_embedding
 
 def extract_tokens_from_binary_parse(parse):
     return parse.replace('(', ' ').replace(')', ' ').replace('-LRB-', '(').replace('-RRB-', ')').split()
@@ -71,8 +74,9 @@ tokenizer.fit_on_texts(training[0] + training[1])
 VOCAB_SIZE = len(tokenizer.word_counts) + 1
 SENTENCE_MAX_LEN = 42
 WORD_DIM = 300
+ANT_WORD_DIM = 200
 PERSPECTIVES = 5
-CLASSES = 3
+CLASS_COUNT = 3
 PATIENCE = 4
 BATCH_SIZE = 32
 DENSE_NEURON_COUNT = 200
@@ -84,9 +88,14 @@ training = prepare_data(training)
 validation = prepare_data(validation)
 test = prepare_data(test)
 
+print("> fetching embedding")
 embedding_matrix = get_embedding_matrix(emb_file, VOCAB_SIZE, WORD_DIM, tokenizer)
 
+print("> fetching antonym embedding")
+ant_embedding_matrix = get_embedding_matrix(ant_emb_file, VOCAB_SIZE, ANT_WORD_DIM, tokenizer)
+
 embed = Embedding(VOCAB_SIZE, WORD_DIM, weights=[embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
+ant_embed = Embedding(VOCAB_SIZE, ANT_WORD_DIM, weights=[ant_embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
 
 premise = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_a")
 hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
@@ -94,18 +103,32 @@ hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
 s1 = embed(premise)
 s2 = embed(hypothesis)
 
-perspectives = [Align(normalize=False, trainable=True)([s1,s2]) for k in range(PERSPECTIVES)]
-# perspectives :: List[BATCH, SENTENCE_MAX_LEN, SENTENCE_MAX_LEN]
+ant_s1 = ant_embed(premise)
+ant_s2 = ant_embed(hypothesis)
 
-pooled = maximum(perspectives) # TODO. this is wrong.
+summer = Lambda(lambda x: K.sum(x, axis=1))
+max_aligner = Lambda(max_both_directions, output_shape=max_both_directions_output_shape)
 
-# summed = Summarize(trainable=True)(pooled)
-summed = Flatten()(pooled)
+aligner = Align()
 
-prediction = Dense(DENSE_NEURON_COUNT)(summed)
+alignment = aligner([s1,s2])
+max_alignment = max_aligner(alignment)
+
+tensors = [
+    summer(s1),
+    summer(s2),
+    summer(ant_s1),
+    summer(ant_s2),
+    max_alignment
+]
+
+aggregation = concatenate(tensors, axis=-1)
+
+prediction = Dense(DENSE_NEURON_COUNT)(aggregation)
+prediction = Dense(DENSE_NEURON_COUNT)(prediction)
 prediction = Dense(DENSE_NEURON_COUNT)(prediction)
 
-prediction = Dense(CLASSES, activation='softmax')(prediction)
+prediction = Dense(CLASS_COUNT, activation='softmax')(prediction)
 
 model = Model(inputs=[premise,hypothesis], outputs=prediction)
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -116,7 +139,7 @@ print('Training')
 _, tmpfn = tempfile.mkstemp()
 # Save the best model during validation and bail out of training early if we're not improving
 callbacks = [EarlyStopping(patience=PATIENCE), ModelCheckpoint(tmpfn, save_best_only=True, save_weights_only=True)]
-model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, nb_epoch=100, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks)
+model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs=100, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks)
 
 # Restore the best found model during validation
 model.load_weights(tmpfn)
