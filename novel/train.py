@@ -1,25 +1,125 @@
-import numpy
+import sys
+import json
+import tempfile
+import argparse
 
-from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional
-from keras.layers.merge import Concatenate, Dot
+import numpy as np
+
 from keras.models import Model
+from keras.utils import np_utils
+from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.layers.merge import Concatenate, Dot, maximum
+
+from keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
+
 
 from custom_layers import *
+from preprocess import get_embedding_matrix
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--train', required=True, help="train file. JSONL file plz")
+parser.add_argument('--dev', required=True, help="dev file. JSONL file plz")
+parser.add_argument('--test', required=True, help="snli test file. JSONL file plz")
+parser.add_argument('--embedding', required=True, help="embedding file")
+
+args = parser.parse_args(sys.argv[1:])
+
+train_file = args.train
+dev_file = args.dev
+test_file = args.test
+emb_file = args.embedding
+
+def extract_tokens_from_binary_parse(parse):
+    return parse.replace('(', ' ').replace(')', ' ').replace('-LRB-', '(').replace('-RRB-', ')').split()
+
+def yield_examples(fn, skip_no_majority=True, limit=None):
+    for i, line in enumerate(open(fn)):
+        if limit and i > limit: break
+
+        data = json.loads(line)
+        label = data['gold_label']
+        s1 = ' '.join(extract_tokens_from_binary_parse(data['sentence1_binary_parse']))
+        s2 = ' '.join(extract_tokens_from_binary_parse(data['sentence2_binary_parse']))
+
+        if skip_no_majority and label == '-': continue
+
+        yield (label, s1, s2)
+
+def get_data(fn, limit=None):
+    raw_data = list(yield_examples(fn=fn, limit=limit))
+    left = [s1 for _, s1, s2 in raw_data]
+    right = [s2 for _, s1, s2 in raw_data]
+    # words
+    print(max(len(x.split()) for x in left))
+    print(max(len(x.split()) for x in right))
+
+    LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
+    Y = np.array([LABELS[l] for l, s1, s2 in raw_data])
+    Y = np_utils.to_categorical(Y, len(LABELS))
+
+    return left, right, Y
+
+training = get_data(train_file)
+validation = get_data(dev_file)
+test = get_data(test_file)
+
+tokenizer = Tokenizer(lower=False, filters='')
+tokenizer.fit_on_texts(training[0] + training[1])
+
+VOCAB_SIZE = len(tokenizer.word_counts) + 1
 SENTENCE_MAX_LEN = 42
 WORD_DIM = 300
+PERSPECTIVES = 5
+CLASSES = 3
+PATIENCE = 4
+BATCH_SIZE = 32
+DENSE_NEURON_COUNT = 200
 
-s1 = Input(shape=(SENTENCE_MAX_LEN, WORD_DIM), name="sentence_a")
-s2 = Input(shape=(SENTENCE_MAX_LEN, WORD_DIM), name="sentence_b")
+to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=SENTENCE_MAX_LEN)
+prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
 
-alignment = Align()([s1,s2])
+training = prepare_data(training)
+validation = prepare_data(validation)
+test = prepare_data(test)
 
-aggregation = Summarize(trainable=True)(alignment)
+embedding_matrix = get_embedding_matrix(emb_file, VOCAB_SIZE, WORD_DIM, tokenizer)
 
-predictions = Dense(10, activation='softmax')(aggregation)
+embed = Embedding(VOCAB_SIZE, WORD_DIM, weights=[embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
 
-model = Model(inputs=[s1,s2], outputs=predictions)
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+premise = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_a")
+hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
+
+s1 = embed(premise)
+s2 = embed(hypothesis)
+
+perspectives = [Align(normalize=False, trainable=True)([s1,s2]) for k in range(PERSPECTIVES)]
+# perspectives :: List[BATCH, SENTENCE_MAX_LEN, SENTENCE_MAX_LEN]
+
+pooled = maximum(perspectives) # TODO. this is wrong.
+
+# summed = Summarize(trainable=True)(pooled)
+summed = Flatten()(pooled)
+
+prediction = Dense(DENSE_NEURON_COUNT)(summed)
+prediction = Dense(DENSE_NEURON_COUNT)(prediction)
+
+prediction = Dense(CLASSES, activation='softmax')(prediction)
+
+model = Model(inputs=[premise,hypothesis], outputs=prediction)
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.summary()
-# model.fit(data, labels)  # starts training
+
+print('Training')
+_, tmpfn = tempfile.mkstemp()
+# Save the best model during validation and bail out of training early if we're not improving
+callbacks = [EarlyStopping(patience=PATIENCE), ModelCheckpoint(tmpfn, save_best_only=True, save_weights_only=True)]
+model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, nb_epoch=100, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks)
+
+# Restore the best found model during validation
+model.load_weights(tmpfn)
+
+loss, acc = model.evaluate([test[0], test[1]], test[2], batch_size=BATCH_SIZE)
+print('Test loss / test accuracy = {:.4f} / {:.4f}'.format(loss, acc))

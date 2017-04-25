@@ -58,9 +58,6 @@ training = get_data('../repo/datasets/snli/snli_1.0/snli_1.0_train.jsonl')
 validation = get_data('../repo/datasets/snli/snli_1.0/snli_1.0_dev.jsonl')
 test = get_data('../repo/datasets/snli/snli_1.0/snli_1.0_test.jsonl')
 
-flatten = lambda l: [item for sublist in l for item in sublist]
-
-def unique_chars(sentences): return "".join(["".join(word) for word in sentences])
 
 tokenizer = Tokenizer(lower=False, filters='')
 tokenizer.fit_on_texts(training[0] + training[1])
@@ -88,7 +85,6 @@ print('RNN / Embed / Sent = {}, {}, {}'.format(RNN, EMBED_HIDDEN_SIZE, SENT_HIDD
 print('GloVe / Trainable Word Embeddings = {}, {}'.format(USE_GLOVE, TRAIN_EMBED))
 
 to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=MAX_LEN)
-to_char_seq = lambda words: 
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
 
 training = prepare_data(training)
