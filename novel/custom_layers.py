@@ -2,7 +2,7 @@ from keras import backend as K
 from keras.engine.topology import Layer
 
 class Align(Layer):
-    def __init__(self, normalize=False, trainable=False, **kwargs):
+    def __init__(self, normalize=True, trainable=False, **kwargs):
         self.normalize = normalize
         super(Align, self).__init__(**kwargs)
 
