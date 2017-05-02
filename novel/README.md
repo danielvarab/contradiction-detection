@@ -1,4 +1,4 @@
-### Novel approach
+# Novel approach
 Our implementation of an NLI system, taking ques from Parikh et. al., IBM BiMBM and Steven Merity
 
 ## Changelog
