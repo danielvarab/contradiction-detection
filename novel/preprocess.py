@@ -11,6 +11,7 @@ def get_embedding_matrix(fn, vocab_size, vocab_dim, tokenizer):
     embeddings_index = {}
     f = open(fn)
     for line in f:
+      line = line.rstrip()
       values = line.split(' ')
       word = values[0]
       coefs = np.asarray(values[1:], dtype='float32')
