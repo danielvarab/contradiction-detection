@@ -22,6 +22,7 @@ from keras.preprocessing.text import Tokenizer
 import keras.preprocessing.text
 from custom_layers import *
 # from callbacks import *
+from model_util import build_sentence_tensors
 from preprocess import get_embedding_matrix
 
 parser = argparse.ArgumentParser()
@@ -29,7 +30,10 @@ parser.add_argument('--train', required=True, help="train file. JSONL file plz")
 parser.add_argument('--dev', required=True, help="dev file. JSONL file plz")
 parser.add_argument('--test', required=True, help="snli test file. JSONL file plz")
 parser.add_argument('--embedding', required=True, help="embedding file")
-parser.add_argument('--agg_we', required=True, help="aggregation operation")
+parser.add_argument('--align_op_we', required=False, help='operator used to sqaush sentence alignment matrix')
+parser.add_argument('--agg_we', required=False, help='operator for aggregating over sentence embeddings')
+parser.add_argument('--align_op_ae', required=False, help='operator used to sqaush antonym alignment matrix')
+parser.add_argument('--agg_ae', required=False, help='operator for aggregating over antonym embeddings')
 
 args = parser.parse_args(sys.argv[1:])
 
@@ -98,8 +102,8 @@ embedding_matrix = get_embedding_matrix(args.embedding, VOCAB, EMBED_HIDDEN_SIZE
 
 embed = Embedding(VOCAB, EMBED_HIDDEN_SIZE, weights=[embedding_matrix], input_length=MAX_LEN, trainable=False)
 
-rnn_kwargs = dict(output_dim=SENT_HIDDEN_SIZE, dropout_W=DP, dropout_U=DP)
 aggregate = Aggregate(operator=aggregation_operator, axis=1)
+align = Align(normalize=True)
 
 translate = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
 
@@ -112,12 +116,10 @@ hypo = embed(hypothesis)
 prem = translate(prem)
 hypo = translate(hypo)
 
-prem = aggregate(prem)
-hypo = aggregate(hypo)
-prem = BatchNormalization()(prem)
-hypo = BatchNormalization()(hypo)
+# Aggregate with respect to the parametized operator
+sentence_representations = build_sentence_tensors(prem, hypo, args.agg_we, args.agg_ae, args.align_op_we, args.align_op_ae)
 
-joint = concatenate([prem, hypo])
+joint = concatenate(sentence_representations)
 joint = Dropout(DP)(joint)
 for i in range(3):
     joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2))(joint)

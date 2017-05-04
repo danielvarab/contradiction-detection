@@ -3,7 +3,7 @@ from keras.engine.topology import Layer
 from keras.layers import merge
 
 class Align(Layer):
-    def __init__(self, normalize=True, trainable=False, **kwargs):
+    def __init__(self, normalize=True, **kwargs):
         self.normalize = normalize
         super(Align, self).__init__(**kwargs)
 
