@@ -13,7 +13,7 @@ from keras.models import Model
 from keras.utils import np_utils
 from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback
-from keras.layers.merge import Concatenate, Dot, maximum
+# from keras.layers.merge import Concatenate, Dot, maximum
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 
@@ -124,9 +124,9 @@ for i in range(3):
     joint = Dropout(DP)(joint)
     joint = BatchNormalization()(joint)
 
-pred = Dense(3), activation='softmax')(joint)
+pred = Dense(3, activation='softmax')(joint)
 
-model = Model(input=[premise, hypothesis], outputs=pred)
+model = Model(inputs=[premise, hypothesis], outputs=pred)
 model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.summary()
