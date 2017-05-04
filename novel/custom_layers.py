@@ -24,6 +24,30 @@ class Align(Layer):
         a_shape, b_shape = input_shape
         return (a_shape[0], a_shape[1], b_shape[1])
 
+class Aggregate(Layer):
+    def __init__(self, operator=None, axis=None, **kwargs):
+        self.operator = operator
+        self.axis = axis
+        super(Aggregate, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(Aggregate, self).build(input_shape)  # Be sure to call this somewhere!
+
+    def call(self, x):
+        if self.operator == "SUM":
+            return K.sum(x, axis=self.axis)
+        elif self.operator == "MAX":
+            return K.max(x, axis=self.axis)
+        elif self.operator == "MIN":
+            return K.min(x, axis=self.axis)
+        elif operator == "MEAN":
+            return K.mean(x, axis=self.axis)
+        else:
+            raise AttributeError('operator is not valid {}'.format(self.operator))
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[2])
+
 def sum_both_directions(x):
     left = K.sum(x,axis=1)
     right = K.sum(x,axis=2)
