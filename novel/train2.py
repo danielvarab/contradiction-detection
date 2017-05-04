@@ -95,7 +95,7 @@ OPTIMIZER = 'rmsprop'
 print('RNN / Embed / Sent = {}, {}, {}'.format(RNN, EMBED_HIDDEN_SIZE, SENT_HIDDEN_SIZE))
 print('GloVe / Trainable Word Embeddings = {}, {}'.format(USE_GLOVE, TRAIN_EMBED))
 
-to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=SENTENCE_MAX_LEN)
+to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=MAX_LEN)
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
 
 training = prepare_data(training)
@@ -103,9 +103,9 @@ validation = prepare_data(validation)
 test = prepare_data(test)
 
 print("> fetching embedding")
-embedding_matrix = get_embedding_matrix(args.embedding, VOCAB_SIZE, WORD_DIM, tokenizer)
+embedding_matrix = get_embedding_matrix(args.embedding, VOCAB, EMBED_HIDDEN_SIZE, tokenizer)
 
-embed = Embedding(VOCAB_SIZE, WORD_DIM, weights=[embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
+embed = Embedding(VOCAB, EMBED_HIDDEN_SIZE, weights=[embedding_matrix], input_length=MAX_LEN, trainable=False)
 
 rnn_kwargs = dict(output_dim=SENT_HIDDEN_SIZE, dropout_W=DP, dropout_U=DP)
 SumEmbeddings = keras.layers.core.Lambda(lambda x: K.sum(x, axis=1), output_shape=(SENT_HIDDEN_SIZE, ))
@@ -147,7 +147,7 @@ _, tmpfn = tempfile.mkstemp()
 early_stop = EarlyStopping(patience=PATIENCE)
 chech_point = ModelCheckpoint(tmpfn, save_best_only=True, save_weights_only=True)
 callbacks = [early_stop, chech_point]
-model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs=EPOCHS, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks, verbose=1)
+model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs=MAX_EPOCHS, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks, verbose=1)
 
 # Restore the best found model during validation
 model.load_weights(tmpfn)
