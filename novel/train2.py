@@ -72,16 +72,7 @@ tokenizer.fit_on_texts(training[0] + training[1])
 
 # Lowest index from the tokenizer is 1 - we need to include 0 in our vocab count
 VOCAB = len(tokenizer.word_counts) + 1
-LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
-#RNN = recurrent.LSTM
-#RNN = lambda *args, **kwargs: Bidirectional(recurrent.LSTM(*args, **kwargs))
-#RNN = recurrent.GRU
-#RNN = lambda *args, **kwargs: Bidirectional(recurrent.GRU(*args, **kwargs))
-# Summation of word embeddings
-RNN = None
-LAYERS = 1
-USE_GLOVE = True
-TRAIN_EMBED = False
+# LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
 EMBED_HIDDEN_SIZE = 300
 SENT_HIDDEN_SIZE = 300
 BATCH_SIZE = 512
@@ -92,8 +83,8 @@ DP = 0.2
 L2 = 4e-6
 ACTIVATION = 'relu'
 OPTIMIZER = 'rmsprop'
-print('RNN / Embed / Sent = {}, {}, {}'.format(RNN, EMBED_HIDDEN_SIZE, SENT_HIDDEN_SIZE))
-print('GloVe / Trainable Word Embeddings = {}, {}'.format(USE_GLOVE, TRAIN_EMBED))
+
+aggregation_operator = args.agg_we # SUM / MAX / MIN
 
 to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=MAX_LEN)
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
@@ -108,7 +99,7 @@ embedding_matrix = get_embedding_matrix(args.embedding, VOCAB, EMBED_HIDDEN_SIZE
 embed = Embedding(VOCAB, EMBED_HIDDEN_SIZE, weights=[embedding_matrix], input_length=MAX_LEN, trainable=False)
 
 rnn_kwargs = dict(output_dim=SENT_HIDDEN_SIZE, dropout_W=DP, dropout_U=DP)
-SumEmbeddings = keras.layers.core.Lambda(lambda x: K.sum(x, axis=1), output_shape=(SENT_HIDDEN_SIZE, ))
+aggregate = Aggregate(operator=aggregation_operator, axis=1)
 
 translate = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
 
@@ -121,23 +112,22 @@ hypo = embed(hypothesis)
 prem = translate(prem)
 hypo = translate(hypo)
 
-rnn = SumEmbeddings if not RNN else RNN(return_sequences=False, **rnn_kwargs)
-prem = rnn(prem)
-hypo = rnn(hypo)
+prem = aggregate(prem)
+hypo = aggregate(hypo)
 prem = BatchNormalization()(prem)
 hypo = BatchNormalization()(hypo)
 
-joint = merge([prem, hypo], mode='concat')
+joint = concatenate([prem, hypo])
 joint = Dropout(DP)(joint)
 for i in range(3):
-    joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, W_regularizer=l2(L2) if L2 else None)(joint)
+    joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2))(joint)
     joint = Dropout(DP)(joint)
     joint = BatchNormalization()(joint)
 
-pred = Dense(len(LABELS), activation='softmax')(joint)
+pred = Dense(3), activation='softmax')(joint)
 
-model = Model(input=[premise, hypothesis], output=pred)
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+model = Model(input=[premise, hypothesis], outputs=pred)
+model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.summary()
 
