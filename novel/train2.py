@@ -21,7 +21,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 import keras.preprocessing.text
 from custom_layers import *
-from logger import *
+# from callbacks import *
 from preprocess import get_embedding_matrix
 
 parser = argparse.ArgumentParser()
@@ -29,12 +29,9 @@ parser.add_argument('--train', required=True, help="train file. JSONL file plz")
 parser.add_argument('--dev', required=True, help="dev file. JSONL file plz")
 parser.add_argument('--test', required=True, help="snli test file. JSONL file plz")
 parser.add_argument('--embedding', required=True, help="embedding file")
+parser.add_argument('--agg_we', required=True, help="aggregation operation")
 
 args = parser.parse_args(sys.argv[1:])
-
-emb_file = args.embedding
-ant_emb_file = args.ant_embedding
-
 
 def extract_tokens_from_binary_parse(parse):
     return parse.replace('(', ' ').replace(')', ' ').replace('-LRB-', '(').replace('-RRB-', ')').split()
@@ -57,9 +54,8 @@ def get_data(fn, limit=None):
     raw_data = list(yield_examples(fn=fn, limit=limit))
     left = [s1 for _, s1, s2 in raw_data]
     right = [s2 for _, s1, s2 in raw_data]
-    # words
-    logging.info(max(len(x.split()) for x in left))
-    logging.info(max(len(x.split()) for x in right))
+    print(max(len(x.split()) for x in left))
+    print(max(len(x.split()) for x in right))
 
     LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
     Y = np.array([LABELS[l] for l, s1, s2 in raw_data])
@@ -70,7 +66,6 @@ def get_data(fn, limit=None):
 training = get_data(args.train)
 validation = get_data(args.dev)
 test = get_data(args.test)
-
 
 tokenizer = Tokenizer(lower=False, filters='')
 tokenizer.fit_on_texts(training[0] + training[1])
@@ -105,18 +100,18 @@ hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
 prem = embedding(premise)
 hypo = embedding(hypothesis)
 
-prem = translate(s1)
-hypo = translate(s2)
+prem = translate(prem)
+hypo = translate(hypo)
 
 aggre_operation = Aggregate(operator=args.agg_we, axis=1)
 prem = aggre_operation(prem)
 hypo = aggre_operation(hypo)
 
-agg1 = BatchNormalization()(agg1)
-agg2 = BatchNormalization()(agg2)
+prem = BatchNormalization()(prem)
+hypo = BatchNormalization()(hypo)
 
-joint = concatenate([agg1,agg2])
-joint = Dropout(DP)(aggregation)
+joint = concatenate([prem,hypo])
+joint = Dropout(DP)(joint)
 for i in range(3):
     joint = Dense(DENSE_NEURON_COUNT, activation='relu', W_regularizer=l2(L2))(joint)
     joint = Dropout(DP)(joint)

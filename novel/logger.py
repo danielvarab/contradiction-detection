@@ -1,3 +1,4 @@
+from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback
 class LossHistory(keras.callbacks.Callback):
     def on_epoch_end(self, batch, logs={}):
         print(str(logs))
