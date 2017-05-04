@@ -70,15 +70,30 @@ test = get_data(args.test)
 tokenizer = Tokenizer(lower=False, filters='')
 tokenizer.fit_on_texts(training[0] + training[1])
 
-VOCAB_SIZE = len(tokenizer.word_counts) + 1
-SENTENCE_MAX_LEN = 42
-WORD_DIM = 300
-EPOCHS = 42
-PATIENCE = 4
+# Lowest index from the tokenizer is 1 - we need to include 0 in our vocab count
+VOCAB = len(tokenizer.word_counts) + 1
+LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
+#RNN = recurrent.LSTM
+#RNN = lambda *args, **kwargs: Bidirectional(recurrent.LSTM(*args, **kwargs))
+#RNN = recurrent.GRU
+#RNN = lambda *args, **kwargs: Bidirectional(recurrent.GRU(*args, **kwargs))
+# Summation of word embeddings
+RNN = None
+LAYERS = 1
+USE_GLOVE = True
+TRAIN_EMBED = False
+EMBED_HIDDEN_SIZE = 300
+SENT_HIDDEN_SIZE = 300
 BATCH_SIZE = 512
-DENSE_NEURON_COUNT = 600
+PATIENCE = 4 # 8
+MAX_EPOCHS = 42
+MAX_LEN = 42
 DP = 0.2
 L2 = 4e-6
+ACTIVATION = 'relu'
+OPTIMIZER = 'rmsprop'
+print('RNN / Embed / Sent = {}, {}, {}'.format(RNN, EMBED_HIDDEN_SIZE, SENT_HIDDEN_SIZE))
+print('GloVe / Trainable Word Embeddings = {}, {}'.format(USE_GLOVE, TRAIN_EMBED))
 
 to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=SENTENCE_MAX_LEN)
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
@@ -90,37 +105,38 @@ test = prepare_data(test)
 print("> fetching embedding")
 embedding_matrix = get_embedding_matrix(args.embedding, VOCAB_SIZE, WORD_DIM, tokenizer)
 
-embedding = Embedding(VOCAB_SIZE, WORD_DIM, weights=[embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
+embed = Embedding(VOCAB_SIZE, WORD_DIM, weights=[embedding_matrix], input_length=SENTENCE_MAX_LEN, trainable=False)
 
-translate = TimeDistributed(Dense(WORD_DIM, activation='relu'))
+rnn_kwargs = dict(output_dim=SENT_HIDDEN_SIZE, dropout_W=DP, dropout_U=DP)
+SumEmbeddings = keras.layers.core.Lambda(lambda x: K.sum(x, axis=1), output_shape=(SENT_HIDDEN_SIZE, ))
 
-premise = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_a")
-hypothesis = Input(shape=(SENTENCE_MAX_LEN,), dtype='int32', name="sentence_b")
+translate = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
 
-prem = embedding(premise)
-hypo = embedding(hypothesis)
+premise = Input(shape=(MAX_LEN,), dtype='int32')
+hypothesis = Input(shape=(MAX_LEN,), dtype='int32')
+
+prem = embed(premise)
+hypo = embed(hypothesis)
 
 prem = translate(prem)
 hypo = translate(hypo)
 
-# aggre_operation = Aggregate(operator=args.agg_we, axis=1)
-aggre_operation = Lambda(lambda x: K.sum(x, axis=1), output_shape=(WORD_DIM, ))
+rnn = SumEmbeddings if not RNN else RNN(return_sequences=False, **rnn_kwargs)
+prem = rnn(prem)
+hypo = rnn(hypo)
+prem = BatchNormalization()(prem)
+hypo = BatchNormalization()(hypo)
 
-prem = aggre_operation(prem) # (?, 300)
-hypo = aggre_operation(hypo) # (?, 300)
-prem = BatchNormalization()(prem) # (?, 300)
-hypo = BatchNormalization()(hypo) # (?, 300)
-
-joint = concatenate([prem,hypo]) # (?, 600)
+joint = merge([prem, hypo], mode='concat')
 joint = Dropout(DP)(joint)
 for i in range(3):
-    joint = Dense(DENSE_NEURON_COUNT, activation='relu', W_regularizer=l2(L2))(joint)
+    joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, W_regularizer=l2(L2) if L2 else None)(joint)
     joint = Dropout(DP)(joint)
     joint = BatchNormalization()(joint)
 
-prediction = Dense(3, activation='softmax', name="prediction")(joint)
+pred = Dense(len(LABELS), activation='softmax')(joint)
 
-model = Model(inputs=[premise,hypothesis], outputs=prediction)
+model = Model(input=[premise, hypothesis], output=pred)
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.summary()
