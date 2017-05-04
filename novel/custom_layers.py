@@ -1,6 +1,8 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras.layers import merge
+from keras.layers.normalization import BatchNormalization
+
 
 class Align(Layer):
     def __init__(self, normalize=True, **kwargs):
@@ -40,7 +42,7 @@ class Aggregate(Layer):
             return K.max(x, axis=self.axis)
         elif self.operator == "MIN":
             return K.min(x, axis=self.axis)
-        elif operator == "MEAN":
+        elif self.operator == "MEAN":
             return K.mean(x, axis=self.axis)
         else:
             raise AttributeError('operator is not valid {}'.format(self.operator))
@@ -48,26 +50,34 @@ class Aggregate(Layer):
     def compute_output_shape(self, input_shape):
         return (input_shape[0], input_shape[2])
 
-def sum_both_directions(x):
-    left = K.sum(x,axis=1)
-    right = K.sum(x,axis=2)
-    return K.concatenate([left, right][:], axis=-1)
+def _align(a, b, normalize):
+    return Align(normalize)([a,b])
 
-def max_both_directions(x):
-    left = K.max(x,axis=1)
-    right = K.max(x,axis=2)
-    return K.concatenate([left, right][:], axis=-1)
+def _aggregate(x, op, axis):
+    aggregation = Aggregate(op, axis)(x)
+    return BatchNormalization()(aggregation)
 
-def min_both_directions(x):
-    left = K.min(x,axis=1)
-    right = K.min(x,axis=2)
-    return K.concatenate([left, right][:], axis=-1)
-
-def mean_both_directions(x):
-    left = K.mean(x,axis=1)
-    right = K.mean(x,axis=2)
-    return K.concatenate([left, right][:], axis=-1)
-
-
-def both_directions_output_shape(input_shape):
-    return (input_shape[0], input_shape[1]*2)
+#
+# def sum_both_directions(x):
+#     left = K.sum(x,axis=1)
+#     right = K.sum(x,axis=2)
+#     return K.concatenate([left, right][:], axis=-1)
+#
+# def max_both_directions(x):
+#     left = K.max(x,axis=1)
+#     right = K.max(x,axis=2)
+#     return K.concatenate([left, right][:], axis=-1)
+#
+# def min_both_directions(x):
+#     left = K.min(x,axis=1)
+#     right = K.min(x,axis=2)
+#     return K.concatenate([left, right][:], axis=-1)
+#
+# def mean_both_directions(x):
+#     left = K.mean(x,axis=1)
+#     right = K.mean(x,axis=2)
+#     return K.concatenate([left, right][:], axis=-1)
+#
+#
+# def both_directions_output_shape(input_shape):
+#     return (input_shape[0], input_shape[1]*2)
