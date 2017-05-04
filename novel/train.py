@@ -6,14 +6,16 @@ import logging
 import timeit
 
 import numpy as np
+np.random.seed(1337)
 
 from keras import backend as K
 from keras.models import Model
 from keras.utils import np_utils
-from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate
+from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback
 from keras.layers.merge import Concatenate, Dot, maximum
 from keras.layers.normalization import BatchNormalization
+from keras.regularizers import l2
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
@@ -56,21 +58,19 @@ stdLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
 logging.getLogger().addHandler(stdLogger)
 
 logging.info('PARAMETERS:\n')
-logging.info('\nEmbedding file: ' + emb_file)
-logging.info('\nAnt Embedding file: ' + ant_emb_file)
-logging.info('\nNeurons: ' + args.neurons)
-logging.info('\nPatience: ' + args.patience)
-logging.info('\nTimedistribution: ' + str(args.timedist))
-logging.info('\nOperators : \n')
-logging.info("\tWord Embedding Alignment OP: " + str(args.align_op_we) + "\n")
-logging.info("\tWord Embedding Aggregation OP: " + str(args.agg_we) + "\n")
-logging.info("\tAnt Embedding Alignment OP: " + str(args.align_op_ae) + "\n")
-logging.info("\tAnt Embedding Aggregation OP: " + str(args.agg_ae) + "\n")
-
-
-
+logging.info('Embedding file: ' + emb_file)
+logging.info('Ant Embedding file: ' + ant_emb_file)
+logging.info('Neurons: ' + args.neurons)
+logging.info('Patience: ' + args.patience)
+logging.info('Timedistribution: ' + str(args.timedist))
+logging.info('Operators :')
+logging.info("\tWord Embedding Alignment OP: " + str(args.align_op_we))
+logging.info("\tWord Embedding Aggregation OP: " + str(args.agg_we))
+logging.info("\tAnt Embedding Alignment OP: " + str(args.align_op_ae))
+logging.info("\tAnt Embedding Aggregation OP: " + str(args.agg_ae) )
 
 logging.info('Arguments: ' + str(args) + '\n\n')
+
 
 def extract_tokens_from_binary_parse(parse):
     return parse.replace('(', ' ').replace(')', ' ').replace('-LRB-', '(').replace('-RRB-', ')').split()
@@ -87,18 +87,7 @@ def yield_examples(fn, skip_no_majority=True, limit=None):
         if skip_no_majority and label == '-': continue
 
         yield (label, s1, s2)
-#https://github.com/fchollet/keras/issues/1072
-def text_to_word_sequence(text,
-                          filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',
-                          lower=True, split=" "):
-    if lower: text = text.lower()
-    if type(text) == unicode:
-        translate_table = {ord(c): ord(t) for c,t in zip(filters, split*len(filters)) }
-    else:
-        translate_table = maketrans(filters, split * len(filters))
-    text = text.translate(translate_table)
-    seq = text.split(split)
-    return [i for i in seq if i]
+
 
 def get_data(fn, limit=None):
     raw_data = list(yield_examples(fn=fn, limit=limit))
@@ -118,8 +107,6 @@ training = get_data(train_file)
 validation = get_data(dev_file)
 test = get_data(test_file)
 
-#https://github.com/fchollet/keras/issues/1072
-#keras.preprocessing.text.text_to_word_sequence = text_to_word_sequence
 
 tokenizer = Tokenizer(lower=False, filters='')
 tokenizer.fit_on_texts(training[0] + training[1])
@@ -128,12 +115,14 @@ VOCAB_SIZE = len(tokenizer.word_counts) + 1
 SENTENCE_MAX_LEN = 42
 WORD_DIM = 300
 ANT_WORD_DIM = 200
-EPOCHS = 100
+EPOCHS = 42
 PERSPECTIVES = 5
 CLASS_COUNT = 3
 PATIENCE = int(args.patience)
-BATCH_SIZE = 32
+BATCH_SIZE = 512
 DENSE_NEURON_COUNT = int(args.neurons)
+DP = 0.2
+L2 = 4e-6
 
 to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=SENTENCE_MAX_LEN)
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
@@ -172,21 +161,25 @@ if args.timedist:
     ant_s2 = ant_translate(ant_s2)
 
 if args.agg_we == 'SUM':
-    aggre_operation = Lambda(lambda x: K.sum(x, axis=1))
+    aggre_operation = Lambda(lambda x: K.sum(x, axis=1), output_shape=(WORD_DIM, ))
 elif args.agg_we == 'MAX':
-    aggre_operation = Lambda(lambda x: K.max(x, axis=1))
+    aggre_operation = Lambda(lambda x: K.max(x, axis=1), output_shape=(WORD_DIM, ))
+elif args.agg_we == 'MIN':
+    aggre_operation = Lambda(lambda x: K.min(x, axis=1), output_shape=(WORD_DIM, ))
 elif args.agg_we == 'MEAN':
-    aggre_operation = Lambda(lambda x: K.mean(x, axis=1))
+    aggre_operation = Lambda(lambda x: K.mean(x, axis=1), output_shape=(WORD_DIM, ))
 elif args.agg_we is not None:
     logging.info('Invalid operator for WE aggregation')
     exit(1)
 
 if args.agg_ae == 'SUM':
-    ant_aggre_operation = Lambda(lambda x: K.sum(x, axis=1))
+    ant_aggre_operation = Lambda(lambda x: K.sum(x, axis=1), output_shape=(ANT_WORD_DIM, ))
 elif args.agg_ae == 'MAX':
-    ant_aggre_operation = Lambda(lambda x: K.max(x, axis=1))
+    ant_aggre_operation = Lambda(lambda x: K.max(x, axis=1), output_shape=(ANT_WORD_DIM, ))
+elif args.agg_ae == 'MIN':
+    ant_aggre_operation = Lambda(lambda x: K.min(x, axis=1), output_shape=(ANT_WORD_DIM, ))
 elif args.agg_ae == 'MEAN':
-    ant_aggre_operation = Lambda(lambda x: K.mean(x, axis=1))
+    ant_aggre_operation = Lambda(lambda x: K.mean(x, axis=1), output_shape=(ANT_WORD_DIM, ))
 elif args.agg_ae is not None:
     logging.info('Invalid operator for AE aggregation')
     exit(1)
@@ -196,6 +189,8 @@ if args.align_op_we == 'SUM':
     operation_aligner = Lambda(sum_both_directions, output_shape=both_directions_output_shape)
 elif args.align_op_we == 'MAX':
     operation_aligner = Lambda(max_both_directions, output_shape=both_directions_output_shape)
+elif args.align_op_we == 'MIN':
+    operation_aligner = Lambda(min_both_directions, output_shape=both_directions_output_shape)
 elif args.align_op_we == 'MEAN':
     operation_aligner = Lambda(mean_both_directions, output_shape=both_directions_output_shape)
 elif args.align_op_we is not None:
@@ -205,6 +200,8 @@ elif args.align_op_we is not None:
 if args.align_op_ae == 'SUM':
     ant_operation_aligner = Lambda(sum_both_directions, output_shape=both_directions_output_shape)
 elif args.align_op_ae == 'MAX':
+    ant_operation_aligner = Lambda(max_both_directions, output_shape=both_directions_output_shape)
+elif args.align_op_ae == 'MIN':
     ant_operation_aligner = Lambda(max_both_directions, output_shape=both_directions_output_shape)
 elif args.align_op_ae == 'MEAN':
     ant_operation_aligner = Lambda(mean_both_directions, output_shape=both_directions_output_shape)
@@ -226,8 +223,8 @@ if args.agg_we is not None:
 
 if args.agg_ae is not None:
     logging.info('Using aggregation of AE with operator ' + args.agg_ae)
-    ant_agg1 = ant_aggre_operation(s1)
-    ant_agg2 = ant_aggre_operation(s2)
+    ant_agg1 = ant_aggre_operation(ant_s1)
+    ant_agg2 = ant_aggre_operation(ant_s2)
     if args.agg_ae == 'SUM':
         ant_agg1 = BatchNormalization()(ant_agg1)
         ant_agg2 = BatchNormalization()(ant_agg2)
@@ -248,6 +245,8 @@ if args.align_op_ae is not None:
         alignment = BatchNormalization()(alignment)
     tensor.append(ant_operation_aligner(alignment))
 
+logging.info('tensor :' + str(tensor))
+
 if(len(tensor) == 0):
     logging.info("Invalid length of tensor, quitting!")
     exit(1)
@@ -257,11 +256,15 @@ elif(len(tensor) == 1):
 else:
     aggregation = concatenate(tensor, axis=-1)
 
-prediction = Dense(DENSE_NEURON_COUNT, activation='relu')(aggregation)
-prediction = Dense(DENSE_NEURON_COUNT, activation='relu')(prediction)
-prediction = Dense(DENSE_NEURON_COUNT, activation='relu')(prediction)
+logging.info('aggregation shape: ' + str(aggregation.get_shape()))
 
-prediction = Dense(CLASS_COUNT, activation='softmax')(prediction)
+joint = Dropout(DP)(aggregation)
+for i in range(3):
+    joint = Dense(DENSE_NEURON_COUNT, activation='relu', W_regularizer=l2(L2) if L2 else None)(joint)
+    joint = Dropout(DP)(joint)
+    joint = BatchNormalization()(joint)
+
+prediction = Dense(CLASS_COUNT, activation='softmax')(joint)
 
 model = Model(inputs=[premise,hypothesis], outputs=prediction)
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -287,7 +290,6 @@ model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs
 model.load_weights(tmpfn)
 
 loss, acc = model.evaluate([test[0], test[1]], test[2], batch_size=BATCH_SIZE)
-logging.info('Test loss / test accuracy = {:.4f} / {:.4f}'.format(loss, acc))
 
 logging.info('Test loss / test accuracy = {:.4f} / {:.4f}'.format(loss, acc) + '\n')
 
