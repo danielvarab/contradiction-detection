@@ -103,21 +103,22 @@ hypo = embedding(hypothesis)
 prem = translate(prem)
 hypo = translate(hypo)
 
-aggre_operation = Aggregate(operator=args.agg_we, axis=1)
-prem = aggre_operation(prem)
-hypo = aggre_operation(hypo)
+# aggre_operation = Aggregate(operator=args.agg_we, axis=1)
+aggre_operation = Lambda(lambda x: K.sum(x, axis=1), output_shape=(WORD_DIM, ))
 
-prem = BatchNormalization()(prem)
-hypo = BatchNormalization()(hypo)
+prem = aggre_operation(prem) # (?, 300)
+hypo = aggre_operation(hypo) # (?, 300)
+prem = BatchNormalization()(prem) # (?, 300)
+hypo = BatchNormalization()(hypo) # (?, 300)
 
-joint = concatenate([prem,hypo])
+joint = concatenate([prem,hypo]) # (?, 600)
 joint = Dropout(DP)(joint)
 for i in range(3):
     joint = Dense(DENSE_NEURON_COUNT, activation='relu', W_regularizer=l2(L2))(joint)
     joint = Dropout(DP)(joint)
     joint = BatchNormalization()(joint)
 
-prediction = Dense(3, activation='softmax')(joint)
+prediction = Dense(3, activation='softmax', name="prediction")(joint)
 
 model = Model(inputs=[premise,hypothesis], outputs=prediction)
 model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
