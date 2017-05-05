@@ -226,7 +226,7 @@ for op in [args.agg_ae, args.agg_we, args.align_op_ae, args.align_op_we]:
     ops += op
 
 name = os.path.splitext(os.path.basename(args.embedding))[0]
-pred_file = open("pred-{0}-.txt".format(name, ), "w")
+pred_file = open("pred-{0}.txt".format(name, ), "w")
 y_proba = model.predict([test[0], test[1]])
 for pred in y_proba:
     pred = np.argmax(pred)
