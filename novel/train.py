@@ -62,7 +62,7 @@ class LossHistory(keras.callbacks.Callback):
         loss = logs.get('loss')
         val_acc = logs.get('val_acc')
         acc = logs.get('acc')
-        print(" Epochs {} - acc : {:.4f}, loss: {:.4f}, val_acc: {:.4f}".format(acc, loss, val_acc))
+        print(" Epochs {} - acc : {:.4f}, loss: {:.4f}, val_acc: {:.4f}".format(batch, acc, loss, val_acc))
 
 print(' PARAMETERS:')
 print(' Embedding file: ' + args.embedding)
