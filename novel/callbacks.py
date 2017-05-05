@@ -8,4 +8,4 @@ class LossHistory(keras.callbacks.Callback):
         loss = logs.get('loss')
         val_acc = logs.get('val_acc')
         acc = logs.get('acc')
-        print(" Epoch: " + str(batch) +"/" + str(EPOCHS)  + " ACC: " + str(acc) + " LOSS: " + str(loss) + " VAL_ACC: " + str(val_acc))
+        print(" Epoch: " + str(batch) + "- ACC: " + str(acc) + " LOSS: " + str(loss) + " VAL_ACC: " + str(val_acc))
