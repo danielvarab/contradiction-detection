@@ -58,11 +58,11 @@ class LossHistory(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         print(" First epoch has been initiated")
     def on_epoch_end(self, batch, logs={}):
-        print(str(logs))
+        # print(str(logs))
         loss = logs.get('loss')
         val_acc = logs.get('val_acc')
         acc = logs.get('acc')
-        print(" Epoch: " + str(batch) + "- ACC: " + str(acc) + " LOSS: " + str(loss) + " VAL_ACC: " + str(val_acc))
+        print(" Epochs {} - acc : {:.4f}, loss: {:.4f}, val_acc: {:.4f}".format(acc, loss, val_acc))
 
 print(' PARAMETERS:')
 print(' Embedding file: ' + args.embedding)
