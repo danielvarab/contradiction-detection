@@ -13,7 +13,6 @@ from keras.models import Model
 from keras.utils import np_utils
 from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback
-# from keras.layers.merge import Concatenate, Dot, maximum
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 
@@ -21,7 +20,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 import keras.preprocessing.text
 from custom_layers import Align, Aggregate, _align, _aggregate
-# from callbacks import *
+from callbacks import LossHistory
 from preprocess import get_embedding_matrix
 
 parser = argparse.ArgumentParser()
@@ -34,8 +33,30 @@ parser.add_argument('--align_op_we', required=False, help='operator used to sqau
 parser.add_argument('--agg_we', required=False, help='operator for aggregating over sentence embeddings')
 parser.add_argument('--align_op_ae', required=False, help='operator used to sqaush antonym alignment matrix')
 parser.add_argument('--agg_ae', required=False, help='operator for aggregating over antonym embeddings')
+parser.add_argument('--outfile', required=False, help="File to write results in")
 
 args = parser.parse_args(sys.argv[1:])
+
+start = timeit.default_timer()
+
+## SETUP LOGGER
+VERBOSE = 1
+if args.outfile:
+    print = logging.info
+    VERBOSE = 2
+    logging.basicConfig(filename=args.outfile, level=logging.INFO)
+    stdLogger=logging.StreamHandler(sys.stdout)
+    stdLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+
+    logging.getLogger().addHandler(stdLogger)
+
+print(' PARAMETERS:')
+print(' Embedding file: ' + args.embedding)
+print(' Ant Embedding file: {0}'.format(args.ant_embedding))
+print(" Word Embedding Alignment OP: {0}".format(args.align_op_we))
+print(" Word Embedding Aggregation OP: {0}".format(args.agg_we))
+print(" Ant Embedding Alignment OP: {0}".format(args.align_op_ae))
+print(" Ant Embedding Aggregation OP: {0}".format(args.agg_ae))
 
 def extract_tokens_from_binary_parse(parse):
     return parse.replace('(', ' ').replace(')', ' ').replace('-LRB-', '(').replace('-RRB-', ')').split()
@@ -58,8 +79,8 @@ def get_data(fn, limit=None):
     raw_data = list(yield_examples(fn=fn, limit=limit))
     left = [s1 for _, s1, s2 in raw_data]
     right = [s2 for _, s1, s2 in raw_data]
-    print(max(len(x.split()) for x in left))
-    print(max(len(x.split()) for x in right))
+    print(" sentence length in {0}: {1}".format(fn,max(len(x.split()) for x in left)))
+    print(" sentence length in {0}: {1}".format(fn,max(len(x.split()) for x in right)))
 
     LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
     Y = np.array([LABELS[l] for l, s1, s2 in raw_data])
@@ -76,7 +97,6 @@ tokenizer.fit_on_texts(training[0] + training[1])
 
 # Lowest index from the tokenizer is 1 - we need to include 0 in our vocab count
 VOCAB = len(tokenizer.word_counts) + 1
-# LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
 EMBED_HIDDEN_SIZE = 300
 SENT_HIDDEN_SIZE = 300
 ANT_SENT_HIDDEN_SIZE = 200
@@ -89,8 +109,6 @@ L2 = 4e-6
 ACTIVATION = 'relu'
 OPTIMIZER = 'rmsprop'
 
-aggregation_operator = args.agg_we # SUM / MAX / MIN
-
 to_seq = lambda X: pad_sequences(tokenizer.texts_to_sequences(X), maxlen=MAX_LEN)
 prepare_data = lambda data: (to_seq(data[0]), to_seq(data[1]), data[2])
 
@@ -98,13 +116,12 @@ training = prepare_data(training)
 validation = prepare_data(validation)
 test = prepare_data(test)
 
-
 premise = Input(shape=(MAX_LEN,), dtype='int32')
 hypothesis = Input(shape=(MAX_LEN,), dtype='int32')
 
 # read in embedding and translate
 if args.agg_we != None or args.align_op_we != None:
-    print("> fetching word embedding")
+    print(" fetching word embedding")
     embedding_matrix = get_embedding_matrix(args.embedding, VOCAB, EMBED_HIDDEN_SIZE, tokenizer)
     embed = Embedding(VOCAB, EMBED_HIDDEN_SIZE, weights=[embedding_matrix], input_length=MAX_LEN, trainable=False)
 
@@ -118,7 +135,7 @@ if args.agg_we != None or args.align_op_we != None:
 
 # read in antonym embedding and translate
 if args.agg_ae != None or args.align_op_ae != None:
-    print("> fetching antonym word embedding")
+    print(" fetching antonym word embedding")
     antonym_embedding_matrix = get_embedding_matrix(args.ant_embedding, VOCAB, ANT_SENT_HIDDEN_SIZE, tokenizer)
     antonym_embed = Embedding(VOCAB, ANT_SENT_HIDDEN_SIZE, weights=[antonym_embedding_matrix], input_length=MAX_LEN, trainable=False)
 
@@ -173,16 +190,41 @@ model.compile(optimizer=OPTIMIZER, loss='categorical_crossentropy', metrics=['ac
 
 model.summary()
 
-print("Training")
+print(" Training")
 _, tmpfn = tempfile.mkstemp()
 # Save the best model during validation and bail out of training early if we're not improving
 early_stop = EarlyStopping(patience=PATIENCE)
-chech_point = ModelCheckpoint(tmpfn, save_best_only=True, save_weights_only=True)
-callbacks = [early_stop, chech_point]
-model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs=MAX_EPOCHS, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks, verbose=1)
+check_point = ModelCheckpoint(tmpfn, save_best_only=True, save_weights_only=True)
+loss_history = LossHistory()
+callbacks = [early_stop, check_point, loss_history]
+model.fit([training[0], training[1]], training[2], batch_size=BATCH_SIZE, epochs=MAX_EPOCHS, validation_data=([validation[0], validation[1]], validation[2]), callbacks=callbacks, verbose=VERBOSE)
 
 # Restore the best found model during validation
 model.load_weights(tmpfn)
 
 loss, acc = model.evaluate([test[0], test[1]], test[2], batch_size=BATCH_SIZE)
-print('Test loss / test accuracy = {:.4f} / {:.4f}'.format(loss, acc))
+print(' Test loss / test accuracy = {:.4f} / {:.4f}'.format(loss, acc))
+
+ops = ""
+for op in [args.agg_ae, args.agg_we, args.align_op_ae, args.align_op_we]:
+    if op is None: continue
+    ops += op
+
+name = os.path.splitext(os.path.basename(args.embedding))[0]
+pred_file = open("pred-{0}-.txt".format(name, ), "w")
+y_proba = model.predict([test[0], test[1]])
+for pred in y_proba:
+    pred = np.argmax(pred)
+    if (pred == 0):
+        pred_file.write("contradiction" + "\n")
+    elif (pred == 1):
+        pred_file.write("neutral" + "\n")
+    elif (pred == 2):
+        pred_file.write("entailment" + "\n")
+
+pred_file.close()
+
+stop = timeit.default_timer()
+time = (stop - start)/60
+
+print(" Model trained in {} mins".format(str(time)))
