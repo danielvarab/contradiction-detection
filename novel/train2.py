@@ -34,6 +34,10 @@ parser.add_argument('--agg_we', required=False, help='operator for aggregating o
 parser.add_argument('--align_op_ae', required=False, help='operator used to sqaush antonym alignment matrix')
 parser.add_argument('--agg_ae', required=False, help='operator for aggregating over antonym embeddings')
 parser.add_argument('--outfile', required=False, help="File to write results in")
+parser.add_argument('--neurons', default=300, help='Number of hidden nodes')
+parser.add_argument('--patience', default=8, help='How long should I wait because breaking out?')
+parser.add_argument('--timedist', required=False, default=False, help='boolean for applying timedistributed layer after embedding')
+
 
 args = parser.parse_args(sys.argv[1:])
 
