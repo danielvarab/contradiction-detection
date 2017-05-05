@@ -242,4 +242,4 @@ pred_file.close()
 stop = timeit.default_timer()
 time = (stop - start)/60
 
-print(" Model trained in {} mins".format(str(time)))
+print(" Model trained in {:.2f} mins".format(str(time)))
