@@ -93,8 +93,8 @@ def get_data(fn, limit=None):
     raw_data = list(yield_examples(fn=fn, limit=limit))
     left = [s1 for _, s1, s2 in raw_data]
     right = [s2 for _, s1, s2 in raw_data]
-    print(" sentence length in {0}: {1}".format(fn,max(len(x.split()) for x in left)))
-    print(" sentence length in {0}: {1}".format(fn,max(len(x.split()) for x in right)))
+    print(" left sentence length in {0}: {1}".format(fn.split("/")[-1], max(len(x.split()) for x in left)))
+    print(" right sentence length in {0}: {1}".format(fn.split("/")[-1], max(len(x.split()) for x in right)))
 
     LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
     Y = np.array([LABELS[l] for l, s1, s2 in raw_data])
