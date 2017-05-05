@@ -1,4 +1,3 @@
-import logging
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback, Callback
 import keras
 class LossHistory(keras.callbacks.Callback):
@@ -9,4 +8,4 @@ class LossHistory(keras.callbacks.Callback):
         loss = logs.get('loss')
         val_acc = logs.get('val_acc')
         acc = logs.get('acc')
-        logging.info(" Epoch: " + str(batch) +"/" + str(EPOCHS)  + " ACC: " + str(acc) + " LOSS: " + str(loss) + " VAL_ACC: " + str(val_acc))
+        print(" Epoch: " + str(batch) +"/" + str(EPOCHS)  + " ACC: " + str(acc) + " LOSS: " + str(loss) + " VAL_ACC: " + str(val_acc))
