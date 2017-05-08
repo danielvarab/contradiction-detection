@@ -110,8 +110,8 @@ alignment = _align(prem, hypo, normalize=True)
 prem_c = _softalign(prem, alignment, transpose=True)
 hypo_c = _softalign(hypo, alignment)
 
-prem = concatenate([prem, prem_c], axis=1)
-hypo = concatenate([hypo, hypo_c], axis=1)
+prem = concatenate([prem, prem_c], axis=-1)
+hypo = concatenate([hypo, hypo_c], axis=-1)
 
 translate2 = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
 
