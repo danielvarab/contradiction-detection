@@ -12,7 +12,7 @@ np.random.seed(1337)
 from keras import backend as K
 from keras.models import Model
 from keras.utils import np_utils
-from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate, Dropout
+from keras.layers import Input, Dense, LSTM, TimeDistributed, Bidirectional, Flatten, Embedding, Lambda, concatenate, Dropout, add, multiply
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LambdaCallback
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
@@ -134,6 +134,9 @@ test = prepare_data(test)
 premise = Input(shape=(MAX_LEN,), dtype='int32')
 hypothesis = Input(shape=(MAX_LEN,), dtype='int32')
 
+prem_reps = [] # premise sentence representations
+hypo_reps = [] # hypothesis sentence representations
+
 # read in embedding and translate
 if args.agg_we != None or args.align_op_we != None:
     print(" fetching word embedding")
@@ -148,6 +151,9 @@ if args.agg_we != None or args.align_op_we != None:
 
         prem = translate(prem)
         hypo = translate(hypo)
+
+    prem_reps.append(prem)
+    hypo_reps.append(hypo)
 
 # read in antonym embedding and translate
 if args.agg_ae != None or args.align_op_ae != None:
@@ -164,41 +170,49 @@ if args.agg_ae != None or args.align_op_ae != None:
         ant_prem = antonym_translate(ant_prem)
         ant_hypo = antonym_translate(ant_hypo)
 
-reps = [] # sentence representations
-if args.agg_we is not None:
-    prem_aggr = _aggregate(prem, args.agg_we, axis=1)
-    hypo_aggr = _aggregate(hypo, args.agg_we, axis=1)
-    reps.append(prem_aggr)
-    reps.append(hypo_aggr)
-
 if args.align_op_we is not None:
     alignment = _align(prem, hypo, normalize=True)
     alignment_aggr_1 = _aggregate(alignment, args.align_op_we, axis=1)
     alignment_aggr_2 = _aggregate(alignment, args.align_op_we, axis=2)
-    reps.append(alignment_aggr_1)
-    reps.append(alignment_aggr_2)
-
-if args.agg_ae is not None:
-    ant_prem_aggr = _aggregate(ant_prem, args.agg_ae, axis=1)
-    ant_hypo_aggr = _aggregate(ant_hypo, args.agg_ae, axis=1)
-    reps.append(ant_prem_aggr)
-    reps.append(ant_hypo_aggr)
+    prem_reps.append(alignment_aggr_1)
+    #prem_reps.append(add(prem,-alignment_aggr_1))
+    prem_reps.append(multiply(prem, alignment_aggr_1))
+    hypo_reps.append(alignment_aggr_2)
+    #hypo_reps.append(add(hypo, -alignment_aggr_2))
+    hypo_reps.append(multiply(hypo,alignment_aggr_2))
 
 if args.align_op_ae is not None:
     alignment = _align(ant_prem, ant_hypo, normalize=True)
     alignment_aggr_1 = _aggregate(alignment, args.align_op_ae, axis=1)
     alignment_aggr_2 = _aggregate(alignment, args.align_op_ae, axis=2)
-    reps.append(alignment_aggr_1)
-    reps.append(alignment_aggr_2)
+    prem_reps.append(multiply(prem, alignment_aggr_1))
+    hypo_reps.append(multiply(hypo, alignment_aggr_2))
 
-assert len(reps) > 0, "no sentence representations, hence no output of the translation layer"
+assert len(prem_reps) > 0, "no sentence representations, hence no output of the translation layer"
 
-joint = concatenate(reps)
+prem_rep = concatenate(prem_reps)
+hypo_rep = concatenate(hypo_reps)
+print(prem_rep.shape())
+prem_rep = Dropout(DP)(prem_rep)
+prem_rep = Dropout(DP)(hypo_rep)
+for i in range(2):
+    prem_rep = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2), name='Prem Dense')(prem_rep)
+    prem_rep = Dropout(DP)(prem_rep)
+    prem_rep = BatchNormalization()(prem_rep)
+    hypo_rep = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2), name='Hypo Dense')(hypo_rep)
+    hypo_rep = Dropout(DP)(hypo_rep)
+    hypo_rep = BatchNormalization()(hypo_rep)
+
+prem_sum = _aggregate(prem_rep, 'SUM', axis=1)
+prem_max = _aggregate(prem_rep, 'MAX', axis=1)
+hypo_sum = _aggregate(hypo_rep, 'SUM', axis=1)
+hypo_max = _aggregate(hypo_rep, 'MAX', axis=1)
+
+joint = concatenate(prem_sum, prem_max, hypo_sum, hypo_max)
+
+joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2), name='Joint Dense')(joint)
 joint = Dropout(DP)(joint)
-for i in range(3):
-    joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2))(joint)
-    joint = Dropout(DP)(joint)
-    joint = BatchNormalization()(joint)
+joint = BatchNormalization()(joint)
 
 pred = Dense(3, activation='softmax')(joint)
 
