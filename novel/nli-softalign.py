@@ -107,8 +107,16 @@ prem = translate(prem)
 hypo = translate(hypo)
 
 alignment = _align(prem, hypo, normalize=True)
-prem = _softalign(prem, alignment, transpose=True)
-hypo = _softalign(hypo, alignment)
+prem_c = _softalign(prem, alignment, transpose=True)
+hypo_c = _softalign(hypo, alignment)
+
+prem = concatenate([prem, prem_c], axis=1)
+hypo = concatenate([hypo, hypo_c], axis=1)
+
+translate2 = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
+
+prem = translate2(prem)
+hypo = translate2(hypo)
 
 prem = _aggregate(prem, "SUM", axis=1)
 hypo = _aggregate(hypo, "SUM", axis=1)
