@@ -20,8 +20,7 @@ from keras.regularizers import l2
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 import keras.preprocessing.text
-from custom_layers import Align, Aggregate, _align, _aggregate
-# from callbacks import *
+from custom_layers import Align, Aggregate, _align, _aggregate, _softalign
 from preprocess import get_embedding_matrix
 
 parser = argparse.ArgumentParser()
@@ -72,7 +71,6 @@ tokenizer.fit_on_texts(training[0] + training[1])
 
 # Lowest index from the tokenizer is 1 - we need to include 0 in our vocab count
 VOCAB = len(tokenizer.word_counts) + 1
-# LABELS = {'contradiction': 0, 'neutral': 1, 'entailment': 2}
 EMBED_HIDDEN_SIZE = 300
 SENT_HIDDEN_SIZE = 300
 ANT_SENT_HIDDEN_SIZE = 200
@@ -108,11 +106,14 @@ translate = TimeDistributed(Dense(SENT_HIDDEN_SIZE, activation=ACTIVATION))
 prem = translate(prem)
 hypo = translate(hypo)
 
-alignment = _align(prem,hypo, normalize=True)
-aggregated = _aggregate(alignment, "MAX", axis=1)
+alignment = _align(prem, hypo, normalize=True)
+prem = _softalign(prem, alignment, transpose=True)
+hypo = _softalign(hypo, alignment)
 
+prem = _aggregate(prem, "SUM", axis=1)
+hypo = _aggregate(hypo, "SUM", axis=1)
 
-joint = concatenate([t_prem, t_hypo, flattened])
+joint = concatenate([prem, hypo])
 joint = Dropout(DP)(joint)
 for i in range(3):
     joint = Dense(2 * SENT_HIDDEN_SIZE, activation=ACTIVATION, kernel_regularizer=l2(L2))(joint)

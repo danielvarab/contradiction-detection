@@ -1,6 +1,6 @@
 from keras import backend as K
 from keras.engine.topology import Layer
-from keras.layers import merge
+from keras.layers import merge, Lambda
 from keras.layers.normalization import BatchNormalization
 
 
@@ -44,6 +44,12 @@ class Aggregate(Layer):
             return K.min(x, axis=self.axis)
         elif self.operator == "MEAN":
             return K.mean(x, axis=self.axis)
+        elif self.operator == "WEIGHTED_SUM":
+            e = K.exp(x - K.max(x, axis=self.axis, keepdims=True))
+            s = K.sum(e, axis=self.axis, keepdims=True)
+            r = e / s
+            print(r.get_shape())
+            return r
         else:
             raise AttributeError('operator is not valid {}'.format(self.operator))
 
@@ -56,6 +62,23 @@ def _align(a, b, normalize):
 def _aggregate(x, op, axis):
     aggregation = Aggregate(op, axis)(x)
     return BatchNormalization()(aggregation)
+
+def _softalign(sentence, alignment, transpose=False):
+    def _normalize_attention(attmat):
+        att = attmat[0]
+        mat = attmat[1]
+        if transpose:
+            att = K.permute_dimensions(att,(0, 2, 1))
+        # 3d softmax
+        e = K.exp(att - K.max(att, axis=-1, keepdims=True))
+        s = K.sum(e, axis=-1, keepdims=True)
+        sm_att = e / s
+        return K.batch_dot(sm_att, mat)
+
+    return Lambda(_normalize_attention)([alignment, sentence])
+
+
+
 
 #
 # def sum_both_directions(x):
