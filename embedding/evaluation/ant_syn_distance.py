@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 import sys
 import os
 import argparse
@@ -11,7 +11,7 @@ import math
 from scipy.spatial import distance
 from scipy.stats import describe, normaltest, mannwhitneyu
 from random import sample
-import read_write 
+import read_write
 
 def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 	vocab = set(words.keys())
@@ -22,10 +22,12 @@ def calculate_lex_distance(lexicon, words, distance_metric='cosine'):
 		for i, lex in enumerate(lexical_words_in_vocab):
 			if(distance_metric == 'cosine'):
 				distances.append(distance.cosine(words[word],words[lex]))
-			if(distance_metric == 'euclidean'):
+			elif(distance_metric == 'euclidean'):
 				distances.append(distance.euclidean(words[word],words[lex]))
+			else:
+				raise ValueError("wat, no metric?")
 
-	if(distances is not []):
+	if(distances):
 		mean = describe(distances).mean
 	else:
 		mean = None
@@ -44,11 +46,7 @@ def plot_distance_distribution(lexicon1, lexicon2, control, label1, label2, conL
 	plt.legend()
 	plt.xlabel(distance)
 	#plt.show()
-<<<<<<< 94ed0a342abae3b5e782cf3e40eb3781133a1cfa
 	plt.savefig("figures/ant_syn_distribution_" + title + "_" + distance + ".png", format='png')
-=======
-	plt.savefig("figures/ant_syn_distribution_" + title + ".png", format='png')
->>>>>>> minor stuff...
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()
@@ -63,6 +61,7 @@ if __name__=='__main__':
 	synonyms = read_write.read_lexicon(args.s)
 	antonyms = read_write.read_lexicon(args.a)
 
+	print("now calculating distances")
 	if(args.d is not None):
 		syn_mean_dist, syn_norm, syns = calculate_lex_distance(synonyms, wordVecs, args.d)
 		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms, wordVecs, args.d)
@@ -71,10 +70,10 @@ if __name__=='__main__':
 		ant_mean_dist, ant_norm, ants = calculate_lex_distance(antonyms,wordVecs)
 	print("Calculated distances...")
 
-	control = sample(wordVecs.values(),int(math.sqrt(len(ants)))*2)
+	control = sample(list(wordVecs.values()),int(math.sqrt(len(ants)))*2)
 	control_dist = []
-	for v in control[0:len(control)/2]:
-		for u in control[len(control)/2:]:
+	for v in control[0:len(control)//2]:
+		for u in control[len(control)//2:]:
 			if(args.d is not 'cosine'):
 				control_dist.append(distance.cosine(v,u))
 			else:
@@ -91,11 +90,3 @@ if __name__=='__main__':
 	print('>> Synonym norm p-value: ' + str(syn_norm))
 	print('>> Antonym norm p-value: ' + str(ant_norm))
 	print('>> Distance sets significance: ' + str(significance))
-
-
-
-
-
-
-
-
